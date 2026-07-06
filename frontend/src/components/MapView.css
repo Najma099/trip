@@ -1,0 +1,50 @@
+.map-wrapper {
+  padding: 0;
+  overflow: hidden;
+}
+
+.trip-map {
+  height: 420px;
+  width: 100%;
+  z-index: 0;
+}
+
+.map-empty {
+  padding: 2rem;
+  text-align: center;
+  color: var(--muted);
+}
+
+.custom-marker {
+  background: transparent;
+  border: none;
+}
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  text-transform: capitalize;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+@media (max-width: 600px) {
+  .trip-map {
+    height: 300px;
+  }
+}
