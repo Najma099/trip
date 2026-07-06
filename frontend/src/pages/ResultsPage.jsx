@@ -8,6 +8,9 @@ import TripTimeline from '../components/TripTimeline'
 import DaySelector from '../components/DaySelector'
 import './ResultsPage.css'
 
+const BANNER_IMG =
+  'https://images.unsplash.com/photo-1601584115197-04ecc0da195d?auto=format&fit=crop&w=1600&q=80'
+
 export default function ResultsPage() {
   const { tripId } = useParams()
   const [trip, setTrip] = useState(null)
@@ -43,20 +46,22 @@ export default function ResultsPage() {
       ? `${formatShortDate(trip.daily_logs[0].date)} — ${formatShortDate(trip.daily_logs[trip.daily_logs.length - 1].date)}`
       : formatShortDate(trip.daily_logs?.[0]?.date)
 
+  const routeTitle = `${shortCity(trip.current_location)} → ${shortCity(trip.dropoff_location)}`
+
   return (
     <section className="results page-enter">
-      <header className="results__header">
-        <div>
-          <p className="eyebrow">Trip #{trip.trip_id}</p>
-          <h1 className="results__title">
-            {shortCity(trip.current_location)} → {shortCity(trip.dropoff_location)}
-          </h1>
-          <p className="results__meta">
+      <div className="results__hero">
+        <img src={BANNER_IMG} alt="" aria-hidden="true" className="results__hero-img" />
+        <div className="results__hero-overlay" />
+        <div className="results__hero-content">
+          <p className="results__hero-eyebrow">Trip #{trip.trip_id}</p>
+          <h1 className="results__hero-title">{routeTitle}</h1>
+          <p className="results__hero-meta">
             via {shortCity(trip.pickup_location)} · {dateRange} · {trip.daily_logs?.length} log days
           </p>
         </div>
-        <Link to="/plan" className="btn btn-primary">Plan Another</Link>
-      </header>
+        <Link to="/plan" className="btn btn-primary results__hero-cta">Plan Another</Link>
+      </div>
 
       <div className={`verdict ${trip.is_legal ? 'verdict--legal' : 'verdict--illegal'}`}>
         <span className="verdict__icon">{trip.is_legal ? '✓' : '✗'}</span>

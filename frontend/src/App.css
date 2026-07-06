@@ -209,70 +209,6 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* ── Log grid ── */
-.log-grid {
-  overflow-x: auto;
-}
-
-.log-grid__date {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  color: var(--text-secondary);
-  margin: 0 0 var(--space-3);
-}
-
-.log-grid__svg {
-  width: 100%;
-  min-width: 780px;
-  background: var(--bg-surface-sunken);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-default);
-}
-
-.log-grid__segments {
-  list-style: none;
-  padding: 0;
-  margin: var(--space-4) 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.log-seg {
-  display: grid;
-  grid-template-columns: auto auto 1fr;
-  gap: var(--space-3);
-  align-items: baseline;
-  font-size: var(--text-sm);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  background: var(--bg-surface-sunken);
-  border-left: 3px solid var(--border-strong);
-}
-
-.log-seg--driving { border-left-color: var(--duty-driving); }
-.log-seg--on { border-left-color: var(--duty-on); }
-.log-seg--off { border-left-color: var(--duty-off); }
-.log-seg--sleeper { border-left-color: var(--duty-sleeper); }
-
-.log-seg__time {
-  font-weight: var(--weight-semibold);
-  font-variant-numeric: tabular-nums;
-}
-
-.log-seg__status {
-  text-transform: capitalize;
-  color: var(--text-secondary);
-}
-
-.log-seg__remark {
-  color: var(--text-secondary);
-  font-size: var(--text-xs);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 /* ── Trip history ── */
 .trip-history__empty {
   margin: 0;
@@ -317,10 +253,5 @@ body {
 @media (max-width: 600px) {
   .app-main {
     padding: var(--space-4);
-  }
-
-  .log-seg {
-    grid-template-columns: 1fr;
-    gap: var(--space-1);
   }
 }

@@ -1,5 +1,4 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { useGuest } from '../context/GuestContext'
 import './Header.css'
 
 function LogoMark() {
@@ -19,10 +18,22 @@ function LogoMark() {
   )
 }
 
+function PersonIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <circle cx="7" cy="4.5" r="2.25" stroke="currentColor" strokeWidth="1.4" />
+      <path
+        d="M2.5 12.5c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 export default function Header() {
-  const { guestId } = useGuest()
   const navigate = useNavigate()
-  const guestLabel = guestId ? `Guest-${guestId.slice(0, 6)}` : 'Guest'
 
   return (
     <header className="site-header">
@@ -45,15 +56,10 @@ export default function Header() {
         </nav>
 
         <div className="header-actions">
-          <div className="guest-badge">
-            <span className="guest-avatar" aria-hidden="true">
-              {guestLabel.charAt(0).toUpperCase()}
-            </span>
-            <div className="guest-info">
-              <span className="guest-greeting">Hi, {guestLabel}</span>
-              <span className="guest-mode">Guest session</span>
-            </div>
-          </div>
+          <span className="guest-pill">
+            <PersonIcon />
+            Guest
+          </span>
           <button type="button" className="btn btn-primary btn-sm" onClick={() => navigate('/plan')}>
             New Trip
           </button>
