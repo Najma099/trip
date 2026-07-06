@@ -1,60 +1,91 @@
 import './DayWiseChart.css'
 
-const MAX_HOURS = 24
+const CHART_H = 120
+const MAX_H = 14
 
-export default function DayWiseChart({ dailyLogs = [] }) {
+export default function DayWiseChart({ dailyLogs = [], selectedDate, onSelectDay }) {
   if (!dailyLogs.length) return null
 
+  const maxVal = Math.max(
+    ...dailyLogs.map((d) => Math.max(d.total_driving_hours || 0, d.total_on_duty_hours || 0, 1)),
+    MAX_H
+  )
+
+  const points = dailyLogs.map((day, i) => {
+    const x = dailyLogs.length === 1 ? 50 : (i / (dailyLogs.length - 1)) * 100
+    const y = 100 - ((day.total_driving_hours || 0) / maxVal) * 100
+    return `${x},${y}`
+  }).join(' ')
+
   return (
-    <section className="card day-chart">
-      <div className="day-chart-header">
-        <h3>Daily Hours Breakdown</h3>
-        <div className="day-chart-legend">
-          <span><i className="dot driving" /> Driving</span>
-          <span><i className="dot on-duty" /> On Duty</span>
-          <span><i className="dot off-duty" /> Off Duty</span>
+    <section className="card chart-card">
+      <div className="chart-card-header">
+        <div>
+          <h3>Daily Driving Hours</h3>
+          <p className="chart-subtitle">Day-wise breakdown across your trip</p>
         </div>
+        <span className="chart-total">
+          {dailyLogs.reduce((s, d) => s + (d.total_driving_hours || 0), 0).toFixed(1)}h total
+        </span>
       </div>
 
-      <div className="day-chart-bars">
-        {dailyLogs.map((day, i) => {
-          const driving = day.total_driving_hours || 0
-          const onDuty = day.total_on_duty_hours || 0
-          const offDuty = day.total_off_duty_hours || 0
-          const dateLabel = new Date(day.date + 'T12:00:00').toLocaleDateString('en-US', {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric',
-          })
+      <div className="chart-body">
+        <div className="chart-bars-row">
+          {dailyLogs.map((day, i) => {
+            const driving = day.total_driving_hours || 0
+            const onDuty = day.total_on_duty_hours || 0
+            const offDuty = day.total_off_duty_hours || 0
+            const d = new Date(day.date + 'T12:00:00')
+            const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            const isSelected = day.date === selectedDate
 
-          return (
-            <div
-              key={day.date}
-              className="day-bar-group"
-              style={{ animationDelay: `${i * 0.1}s` }}
-            >
-              <div className="day-bar-stack">
-                <div
-                  className="bar-segment driving"
-                  style={{ height: `${(driving / MAX_HOURS) * 100}%` }}
-                  title={`Driving: ${driving}h`}
-                />
-                <div
-                  className="bar-segment on-duty"
-                  style={{ height: `${(onDuty / MAX_HOURS) * 100}%` }}
-                  title={`On duty: ${onDuty}h`}
-                />
-                <div
-                  className="bar-segment off-duty"
-                  style={{ height: `${(offDuty / MAX_HOURS) * 100}%` }}
-                  title={`Off duty: ${offDuty}h`}
-                />
-              </div>
-              <span className="day-bar-label">{dateLabel}</span>
-              <span className="day-bar-total">{driving.toFixed(1)}h drive</span>
-            </div>
-          )
-        })}
+            return (
+              <button
+                key={day.date}
+                type="button"
+                className={`chart-bar-col ${isSelected ? 'selected' : ''}`}
+                onClick={() => onSelectDay?.(day.date)}
+                style={{ animationDelay: `${i * 0.08}s` }}
+              >
+                <div className="chart-bar-stack" style={{ height: CHART_H }}>
+                  <div
+                    className="chart-bar off"
+                    style={{ height: `${(offDuty / maxVal) * 100}%` }}
+                    title={`Off: ${offDuty}h`}
+                  />
+                  <div
+                    className="chart-bar on"
+                    style={{ height: `${(onDuty / maxVal) * 100}%` }}
+                    title={`On duty: ${onDuty}h`}
+                  />
+                  <div
+                    className="chart-bar drive"
+                    style={{ height: `${(driving / maxVal) * 100}%` }}
+                    title={`Driving: ${driving}h`}
+                  />
+                </div>
+                <span className="chart-bar-label">{label}</span>
+                <span className="chart-bar-value">{driving.toFixed(1)}h</span>
+              </button>
+            )
+          })}
+        </div>
+
+        <svg className="chart-line" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <polyline
+            points={points}
+            fill="none"
+            stroke="var(--color-accent)"
+            strokeWidth="2"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+      </div>
+
+      <div className="chart-legend">
+        <span><i className="leg drive" /> Driving</span>
+        <span><i className="leg on" /> On Duty</span>
+        <span><i className="leg off" /> Off Duty</span>
       </div>
     </section>
   )

@@ -1,31 +1,37 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { GuestProvider } from './context/GuestContext'
+import Header from './components/Header'
+import Footer from './components/Footer'
 import LandingPage from './pages/LandingPage'
 import TripFormPage from './pages/TripFormPage'
 import ResultsPage from './pages/ResultsPage'
 import './App.css'
 
+function AppLayout() {
+  const location = useLocation()
+  const isLanding = location.pathname === '/'
+
+  return (
+    <div className="app-shell">
+      <Header />
+      <main className={`app-main ${isLanding ? 'app-main-wide' : ''}`}>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/plan" element={<TripFormPage />} />
+          <Route path="/results/:tripId" element={<ResultsPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+      <Footer />
+    </div>
+  )
+}
+
 function App() {
   return (
     <GuestProvider>
       <BrowserRouter>
-        <div className="app">
-          <header className="app-header">
-            <div className="brand">
-              <span className="brand-mark">◆</span>
-              <span className="brand-name">Spotter Trip Planner</span>
-            </div>
-            <p className="brand-tagline">FMCSA-compliant route & daily log sheets</p>
-          </header>
-          <main className="app-main">
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/plan" element={<TripFormPage />} />
-              <Route path="/results/:tripId" element={<ResultsPage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
-        </div>
+        <AppLayout />
       </BrowserRouter>
     </GuestProvider>
   )

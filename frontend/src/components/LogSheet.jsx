@@ -1,6 +1,7 @@
 import LogSheetGrid from './LogSheetGrid'
+import DaySelector from './DaySelector'
 
-export default function LogSheet({ dailyLogs = [] }) {
+export default function LogSheet({ dailyLogs = [], selectedDate, onSelectDate }) {
   if (!dailyLogs.length) {
     return (
       <div className="card log-sheet-empty">
@@ -9,21 +10,39 @@ export default function LogSheet({ dailyLogs = [] }) {
     )
   }
 
+  const activeDate = selectedDate || dailyLogs[0].date
+  const activeDay = dailyLogs.find((d) => d.date === activeDate) || dailyLogs[0]
+
   return (
-    <section className="log-sheets">
-      <h3>Daily Log Sheets</h3>
-      {dailyLogs.map((day) => (
-        <div key={day.date} className="card log-sheet-day">
-          <LogSheetGrid segments={day.segments} date={day.date} />
-          <div className="log-totals">
-            <span>Driving: {day.total_driving_hours}h</span>
-            <span>On Duty: {day.total_on_duty_hours}h</span>
-            {day.total_off_duty_hours != null && (
-              <span>Off Duty: {day.total_off_duty_hours}h</span>
-            )}
+    <section className="log-sheets card">
+      <div className="log-sheets-header">
+        <h3>Daily Log Sheet</h3>
+        <p className="log-sheets-sub">FMCSA §395.8 duty status grid — select a day below</p>
+      </div>
+
+      <DaySelector
+        dailyLogs={dailyLogs}
+        selectedDate={activeDate}
+        onSelect={onSelectDate}
+      />
+
+      <div className="log-sheet-day active-day">
+        <LogSheetGrid segments={activeDay.segments} date={activeDay.date} />
+        <div className="log-totals">
+          <div className="log-total-item">
+            <span className="log-total-label">Driving</span>
+            <span className="log-total-value">{activeDay.total_driving_hours}h</span>
+          </div>
+          <div className="log-total-item">
+            <span className="log-total-label">On Duty</span>
+            <span className="log-total-value">{activeDay.total_on_duty_hours}h</span>
+          </div>
+          <div className="log-total-item">
+            <span className="log-total-label">Off Duty</span>
+            <span className="log-total-value">{activeDay.total_off_duty_hours ?? '—'}h</span>
           </div>
         </div>
-      ))}
+      </div>
     </section>
   )
 }
