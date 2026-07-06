@@ -2,15 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-
-const STOP_META = {
-  pickup: { label: 'Pickup', color: 'var(--stop-pickup)' },
-  dropoff: { label: 'Dropoff', color: 'var(--stop-dropoff)' },
-  fuel: { label: 'Fuel', color: 'var(--stop-fuel)' },
-  rest: { label: '10-hour Rest', color: 'var(--stop-rest)' },
-  break: { label: '30-min Break', color: 'var(--stop-break)' },
-  deadhead: { label: 'Origin', color: 'var(--stop-deadhead)' },
-}
+import '../styles/trip-map.css'
+import useReducedMotion from '../hooks/useReducedMotion'
+import { STOP_META } from '../constants/stopColors'
 
 function FitBounds({ bounds }) {
   const map = useMap()
@@ -20,7 +14,7 @@ function FitBounds({ bounds }) {
   return null
 }
 
-function AnimatedRoute({ positions, onProgress }) {
+function AnimatedRoute({ positions, onProgress, reduceMotion }) {
   const [visibleCount, setVisibleCount] = useState(0)
   const pathRef = useRef(null)
   const [pathLength, setPathLength] = useState(0)
@@ -61,13 +55,15 @@ function AnimatedRoute({ positions, onProgress }) {
             const len = e.target.getElement()?.getTotalLength?.() ?? 0
             setPathLength(len)
             const el = e.target.getElement()
-            if (el) {
+            if (el && !reduceMotion) {
               el.style.strokeDasharray = `${len}`
               el.style.strokeDashoffset = `${len}`
               el.style.transition = 'stroke-dashoffset 2000ms cubic-bezier(0.2, 0.7, 0.2, 1)'
               requestAnimationFrame(() => {
                 el.style.strokeDashoffset = '0'
               })
+            } else if (el) {
+              el.style.strokeDashoffset = '0'
             }
           },
         }}
@@ -78,7 +74,7 @@ function AnimatedRoute({ positions, onProgress }) {
 
 function makeStopIcon(color, size = 18) {
   return L.divIcon({
-    className: '',
+    className: 'sp-stop-marker',
     html: `<div style="width:${size}px;height:${size}px;border-radius:999px;background:${color};border:2.5px solid white;box-shadow:0 2px 6px rgba(15,23,42,0.2)"></div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
@@ -97,6 +93,7 @@ function TruckMarkerIcon() {
 }
 
 export default function TripMap({ geometry = [], stops = [] }) {
+  const reduceMotion = useReducedMotion()
   const [truckIndex, setTruckIndex] = useState(0)
   const positions = useMemo(() => geometry.map(([lat, lng]) => [lat, lng]), [geometry])
 
@@ -124,7 +121,7 @@ export default function TripMap({ geometry = [], stops = [] }) {
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
         <FitBounds bounds={bounds} />
-        <AnimatedRoute positions={positions} onProgress={setTruckIndex} />
+        <AnimatedRoute positions={positions} onProgress={setTruckIndex} reduceMotion={reduceMotion} />
         {truckPos && <Marker position={truckPos} icon={truckIcon} zIndexOffset={1000} />}
         {stops.map((stop, i) => {
           const meta = STOP_META[stop.type] || STOP_META.deadhead

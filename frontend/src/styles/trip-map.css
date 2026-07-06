@@ -1,0 +1,5 @@
+/* Leaflet divIcons use inline HTML — keep wrapper transparent so inner stop color shows */
+.leaflet-div-icon.sp-stop-marker {
+  background: transparent !important;
+  border: none !important;
+}
