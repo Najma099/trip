@@ -41,9 +41,9 @@ def test_route_hgv_returns_leg(mock_session_cls):
     mock_resp = MagicMock()
     mock_resp.status_code = 200
     mock_resp.json.return_value = {
-        "routes": [
+        "features": [
             {
-                "summary": {"distance": 386000, "duration": 14400},
+                "properties": {"summary": {"distance": 386000, "duration": 14400}},
                 "geometry": {
                     "coordinates": [[-96.797, 32.7767], [-95.3698, 29.7604]]
                 },

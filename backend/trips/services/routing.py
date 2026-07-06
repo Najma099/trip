@@ -109,7 +109,7 @@ class ORSClient:
             "preference": "recommended",
         }
         resp = self.session.post(
-            f"{ORS_BASE}/v2/directions/driving-hgv",
+            f"{ORS_BASE}/v2/directions/driving-hgv/geojson",
             json=body,
             headers=self._headers(),
             timeout=60,
@@ -120,12 +120,12 @@ class ORSClient:
                 upstream_status=resp.status_code,
             )
         data = resp.json()
-        routes = data.get("routes") or []
-        if not routes:
+        features = data.get("features") or []
+        if not features:
             raise RoutingError(f"No route found from {start.label} to {end.label}")
-        route = routes[0]
-        summary = route["summary"]
-        coords = route["geometry"]["coordinates"]
+        feature = features[0]
+        summary = feature["properties"]["summary"]
+        coords = feature["geometry"]["coordinates"]
         geometry = [[c[1], c[0]] for c in coords]
         return RouteLeg(
             distance_miles=round(_meters_to_miles(summary["distance"]), 2),
