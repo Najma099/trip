@@ -74,6 +74,47 @@ body {
   margin-bottom: 1rem;
 }
 
+.landing-layout,
+.plan-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .landing-layout,
+  .plan-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin: 0 0 0.5rem;
+  font-weight: 600;
+}
+
+.feature-list {
+  margin: 1rem 0 0;
+  padding-left: 1.25rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.feature-list li {
+  margin-bottom: 0.35rem;
+}
+
+.form-subtitle {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: -0.5rem 0 1rem;
+}
+
 .landing h1 {
   margin-top: 0;
   font-size: 1.75rem;
@@ -235,6 +276,112 @@ body {
   overflow: auto;
   max-height: 400px;
   color: var(--muted);
+}
+
+.log-sheets h3 {
+  margin: 1.5rem 0 0.75rem;
+}
+
+.log-sheet-day {
+  margin-bottom: 1rem;
+}
+
+.log-sheet-grid {
+  overflow-x: auto;
+}
+
+.log-svg {
+  width: 100%;
+  min-width: 780px;
+  height: auto;
+  display: block;
+}
+
+.log-date {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.log-segment-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.log-seg {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+
+.log-seg-driving { border-left: 3px solid #3b82f6; }
+.log-seg-on { border-left: 3px solid #f59e0b; }
+.log-seg-off { border-left: 3px solid #64748b; }
+.log-seg-sleeper { border-left: 3px solid #8b5cf6; }
+
+.log-totals {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.log-sheet-empty {
+  text-align: center;
+  color: var(--muted);
+}
+
+.trip-history {
+  margin-top: 1rem;
+}
+
+.trip-history h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.trip-history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.trip-history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--border);
+  gap: 0.5rem;
+}
+
+.trip-history-item:last-child {
+  border-bottom: none;
+}
+
+.trip-history-item a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.trip-history-item a:hover {
+  text-decoration: underline;
+}
+
+.trip-history-meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.results-layout {
+  display: grid;
+  gap: 1rem;
 }
 
 @media (max-width: 600px) {

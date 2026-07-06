@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGuest } from '../context/GuestContext'
 import { createTrip } from '../services/api'
@@ -10,7 +10,7 @@ const DEMO = {
   current_cycle_used: 20,
 }
 
-export default function TripForm() {
+export default function TripForm({ autoFillDemo = false }) {
   const { guestId } = useGuest()
   const navigate = useNavigate()
   const [form, setForm] = useState({
@@ -21,6 +21,12 @@ export default function TripForm() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (autoFillDemo) {
+      setForm({ ...DEMO, current_cycle_used: String(DEMO.current_cycle_used) })
+    }
+  }, [autoFillDemo])
 
   function updateField(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }))
