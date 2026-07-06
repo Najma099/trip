@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap } from 'react-leaflet'
+import { MapContainer, TileLayer, Polyline, CircleMarker, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import '../styles/trip-map.css'
 import useReducedMotion from '../hooks/useReducedMotion'
 import { STOP_META } from '../constants/stopColors'
 
@@ -72,15 +71,6 @@ function AnimatedRoute({ positions, onProgress, reduceMotion }) {
   )
 }
 
-function makeStopIcon(color, size = 18) {
-  return L.divIcon({
-    className: 'sp-stop-marker',
-    html: `<div style="width:${size}px;height:${size}px;border-radius:999px;background:${color};border:2.5px solid white;box-shadow:0 2px 6px rgba(15,23,42,0.2)"></div>`,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-  })
-}
-
 function TruckMarkerIcon() {
   return L.divIcon({
     className: 'sp-truck-marker',
@@ -96,7 +86,6 @@ export default function TripMap({ geometry = [], stops = [] }) {
   const reduceMotion = useReducedMotion()
   const [truckIndex, setTruckIndex] = useState(0)
   const positions = useMemo(() => geometry.map(([lat, lng]) => [lat, lng]), [geometry])
-
   const truckIcon = useMemo(() => TruckMarkerIcon(), [])
 
   if (!geometry.length) {
@@ -126,18 +115,27 @@ export default function TripMap({ geometry = [], stops = [] }) {
         {stops.map((stop, i) => {
           const meta = STOP_META[stop.type] || STOP_META.deadhead
           const isMajor = stop.type === 'pickup' || stop.type === 'dropoff' || stop.type === 'deadhead'
+          const radius = isMajor ? 9 : 7
+
           return (
-            <Marker
-              key={`${stop.type}-${i}`}
-              position={[stop.lat, stop.lng]}
-              icon={makeStopIcon(meta.color, isMajor ? 18 : 12)}
+            <CircleMarker
+              key={`${stop.type}-${i}-${stop.lat}-${stop.lng}`}
+              center={[stop.lat, stop.lng]}
+              radius={radius}
+              pathOptions={{
+                fillColor: meta.color,
+                fillOpacity: 1,
+                color: '#ffffff',
+                weight: 2.5,
+                opacity: 1,
+              }}
             >
               <Popup>
                 <strong>{meta.label}</strong>
                 <br />
                 {stop.location_label}
               </Popup>
-            </Marker>
+            </CircleMarker>
           )
         })}
       </MapContainer>
@@ -148,7 +146,7 @@ export default function TripMap({ geometry = [], stops = [] }) {
       >
         {Object.entries(STOP_META).map(([key, { label, color }]) => (
           <span key={key} className="flex items-center gap-1.5 text-[10px] font-medium text-[color:var(--sp-text-secondary)]">
-            <span className="h-2 w-2 rounded-full ring-1 ring-white" style={{ backgroundColor: color }} />
+            <span className="h-2.5 w-2.5 rounded-full ring-1 ring-white" style={{ backgroundColor: color }} />
             {label}
           </span>
         ))}

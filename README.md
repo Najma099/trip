@@ -1,48 +1,95 @@
-# Spotter Trip Planner
+# Spotter — HOS Trip Planner
 
-Trip planner for US trucking dispatchers. Enter current location, pickup, dropoff, and cycle hours used — get back an HOS-compliant truck route map and FMCSA daily log sheets.
+**Plan truck routes. Stay legal. Print FMCSA log sheets.**
+
+Spotter is a dispatcher-grade trip planner for US freight. Enter four fields — current location, pickup, dropoff, and cycle hours used — and get back a truck-safe route map, stop timeline, and FMCSA §395.8 daily log sheets that respect the 11-hour drive limit, 14-hour window, 30-minute break rule, and 70/8-day cycle.
+
+Built for portfolio demos and real dispatch workflows. Guest mode — no login required.
+
+---
+
+## What you get
+
+| Output | Description |
+|--------|-------------|
+| **Route map** | HGV routing via OpenRouteService with color-coded stops (pickup, dropoff, fuel, rest, break) |
+| **Stop timeline** | Arrival/departure at every planned event along the route |
+| **Daily logs** | FMCSA grid with duty-colored segments (Off · Sleeper · Driving · On Duty) |
+| **Compliance verdict** | Legal / illegal with reason if HOS clocks are exhausted |
+
+---
 
 ## Architecture
 
+```mermaid
+flowchart LR
+  subgraph client ["Browser (Vercel)"]
+    UI["React + Vite"]
+    Map["Leaflet Map"]
+    Logs["FMCSA Log Sheets"]
+    UI --> Map
+    UI --> Logs
+  end
+
+  subgraph server ["API (Render)"]
+    API["Django REST"]
+    HOS["HOS Engine"]
+    SIM["Trip Simulator"]
+    API --> HOS
+    API --> SIM
+  end
+
+  subgraph external ["External"]
+    ORS["OpenRouteService"]
+    PG["PostgreSQL"]
+  end
+
+  UI -->|"JSON /api/*"| API
+  SIM --> ORS
+  API --> PG
 ```
-React (Vercel)  ──JSON──►  Django REST API (Render/Railway)  ──►  OpenRouteService
-                                    │
-                                    ▼
-                              PostgreSQL
-```
 
-- **Frontend:** React + Vite, react-leaflet map, SVG log sheets, guest mode via `localStorage` UUID
-- **Backend:** Django + DRF, pure-Python HOS engine, ORS `driving-hgv` truck routing
-- **Database:** PostgreSQL for trip history keyed by `guest_id`
+**Stack**
 
-## Hours-of-Service rules enforced
+- **Frontend:** React 19, Vite, Tailwind v4, Leaflet, Recharts — deployed on **Vercel**
+- **Backend:** Django 5 + DRF, pure-Python HOS engine — deployed on **Render**
+- **Routing:** OpenRouteService `driving-hgv` profile
+- **Database:** PostgreSQL (trip history keyed by guest UUID in `localStorage`)
 
-| Clock | Limit | Reset | Regulation |
-|---|---|---|---|
-| Driving window | 14 hours from first on-duty | 10 consecutive hours off | 49 CFR §395.3(a)(2) |
-| Driving limit | 11 hours driving per window | 10 consecutive hours off | 49 CFR §395.3(a)(3) |
-| 30-minute break | After 8 cumulative driving hours | The break itself | 49 CFR §395.3(a)(3)(ii) |
-| 70-hour cycle | 70 on-duty hours in 8 days | 34-hour restart | 49 CFR §395.3(b)(2) |
+---
 
-Trip sequence: pre-trip inspection → drive to pickup → 1 hr on-duty at pickup → drive to dropoff (fuel every ≤1,000 mi) → 1 hr on-duty at dropoff. Rest, break, and restart events are inserted automatically when clocks are exhausted.
+## HOS rules enforced
 
-## Requirements
+| Rule | Limit | Reset |
+|------|-------|-------|
+| Driving window | 14 hours from first on-duty | 10 consecutive hours off |
+| Driving limit | 11 hours driving per window | 10 consecutive hours off |
+| 30-minute break | After 8 cumulative driving hours | The break itself |
+| 70-hour cycle | 70 on-duty hours in 8 days | 34-hour restart |
+
+Trip sequence: pre-trip inspection → drive to pickup → 1 hr on-duty at pickup → drive to dropoff (fuel every ≤1,000 mi) → 1 hr on-duty at dropoff. Rest, break, and restart events are inserted automatically.
+
+---
+
+## Quick start (local)
+
+### Prerequisites
 
 - Python 3.11+
 - Node 20+
-- Docker (for local PostgreSQL)
-- [OpenRouteService](https://openrouteservice.org/dev/) API key (free tier)
+- Docker (for PostgreSQL)
+- [OpenRouteService API key](https://openrouteservice.org/dev/) (free tier)
 
-## Local setup
-
-### 1. Environment
+### 1. Clone and configure
 
 ```bash
+git clone https://github.com/Najma099/trip.git
+cd trip
 cp .env.example .env
-# Edit .env — set ORS_API_KEY from https://openrouteservice.org/dev/
+# Set ORS_API_KEY in .env
 ```
 
-### 2. Database
+### 2. Start the database
 
 ```bash
 docker compose up -d db
@@ -56,7 +103,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python manage.py migrate
-python manage.py runserver
+python manage.py runserver 8000
 # → http://127.0.0.1:8000
 ```
 
@@ -66,27 +113,110 @@ python manage.py runserver
 cd frontend
 npm install
 npm run dev
-# → http://localhost:5173  (proxies /api to Django)
+# → http://127.0.0.1:5173  (proxies /api to Django)
 ```
 
-### 5. Demo trip
+### 5. Try the demo
 
-Open the app → **Try Demo Trip** or on the plan form click **Load Demo Trip**:
+Open the app → **Try Demo Trip** or on Plan Trip click **Fill demo trip**:
 
-- Current: Dallas, TX
-- Pickup: Houston, TX
-- Dropoff: Chicago, IL
-- Cycle used: 20 hours
+- Current: Dallas, TX → Pickup: Houston, TX → Dropoff: Chicago, IL · 20h cycle used
 
-## Running tests
+---
+
+## Deployment
+
+Your latest commits live on your machine until you push. GitHub currently shows older commits — run `git push origin main` after pulling this branch.
+
+### Step 0 — Push to GitHub
 
 ```bash
-cd backend
-source .venv/bin/activate
-pytest tests/ -v
+git push origin main
 ```
 
-## API
+If you rewrote history (e.g. removed co-author lines), use:
+
+```bash
+git push --force-with-lease origin main
+```
+
+---
+
+### Backend → Render
+
+1. Go to [render.com](https://render.com) → **New** → **Blueprint** (or Web Service)
+2. Connect the `Najma099/trip` GitHub repo
+3. Render reads `render.yaml` at the repo root — it creates:
+   - **spotter-trip-api** (Python web service, root dir `backend`)
+   - **spotter-trip-db** (PostgreSQL)
+4. Set environment variables in the Render dashboard:
+
+   | Variable | Value |
+   |----------|-------|
+   | `ORS_API_KEY` | Your OpenRouteService key |
+   | `CORS_ALLOWED_ORIGINS` | Your Vercel URL, e.g. `https://trip-xyz.vercel.app` |
+   | `DJANGO_SECRET_KEY` | Auto-generated by Render |
+   | `DATABASE_URL` | Auto-linked from PostgreSQL |
+
+5. Deploy. Note your API URL, e.g. `https://spotter-trip-api.onrender.com`
+
+**Manual alternative** (without Blueprint):
+
+- Root directory: `backend`
+- Build: `pip install -r requirements.txt && python manage.py migrate --noinput`
+- Start: `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT`
+
+---
+
+### Frontend → Vercel
+
+1. Go to [vercel.com](https://vercel.com) → **Add New Project**
+2. Import `Najma099/trip` from GitHub
+3. Configure:
+
+   | Setting | Value |
+   |---------|-------|
+   | **Root Directory** | `frontend` |
+   | **Framework** | Vite |
+   | **Build Command** | `npm run build` |
+   | **Output Directory** | `dist` |
+
+4. Add environment variable:
+
+   | Variable | Value |
+   |----------|-------|
+   | `VITE_API_URL` | `https://spotter-trip-api.onrender.com` (your Render URL, no trailing slash) |
+
+5. Deploy. Vercel uses `frontend/vercel.json` for SPA rewrites.
+
+6. **Update Render CORS:** Go back to Render → set `CORS_ALLOWED_ORIGINS` to your final Vercel URL → redeploy backend.
+
+---
+
+### Deployment checklist
+
+```mermaid
+flowchart TD
+  A["Push code to GitHub"] --> B["Deploy backend on Render"]
+  B --> C["Copy Render API URL"]
+  C --> D["Set VITE_API_URL on Vercel"]
+  D --> E["Deploy frontend on Vercel"]
+  E --> F["Set CORS_ALLOWED_ORIGINS on Render"]
+  F --> G["Redeploy backend"]
+  G --> H["Plan a demo trip end-to-end"]
+```
+
+- [ ] GitHub repo is up to date (`git push`)
+- [ ] Render web service is live (`/api/geocode/?text=tx` returns JSON)
+- [ ] PostgreSQL connected (`DATABASE_URL` set)
+- [ ] `ORS_API_KEY` set on Render
+- [ ] Vercel deployed with `VITE_API_URL` pointing to Render
+- [ ] `CORS_ALLOWED_ORIGINS` on Render includes Vercel domain
+- [ ] Demo trip plans successfully from production URL
+
+---
+
+## API reference
 
 ### `POST /api/trips/`
 
@@ -100,54 +230,42 @@ pytest tests/ -v
 }
 ```
 
-Returns trip envelope with `route.geometry`, `stops[]`, `daily_logs[]`, `is_legal`.
+Returns trip with `route.geometry`, `stops[]`, `daily_logs[]`, `is_legal`.
 
 ### `GET /api/trips/<id>/`
 
-Retrieve a saved trip (no re-routing).
+Retrieve a saved trip (read-only, no re-routing).
 
 ### `GET /api/trips/?guest_id=<uuid>`
 
-List guest's past trips.
+List guest trip history.
 
 ### `GET /api/geocode/?text=<query>`
 
 Location autocomplete suggestions.
 
-## Deployment
+---
 
-### Backend (Render)
+## Tests
 
-1. Push repo to GitHub
-2. Create Render Web Service from `render.yaml` or manually:
-   - Root directory: `backend`
-   - Build: `pip install -r requirements.txt && python manage.py migrate --noinput`
-   - Start: `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT`
-3. Set env vars: `ORS_API_KEY`, `CORS_ALLOWED_ORIGINS` (your Vercel URL), `DATABASE_URL`
+```bash
+cd backend
+source .venv/bin/activate
+DATABASE_URL="" pytest tests/ -v
+```
 
-### Frontend (Vercel)
+CI runs automatically on push/PR to `main` via `.github/workflows/ci.yml`.
 
-1. Import repo, set root directory to `frontend`
-2. Set `VITE_API_URL` to your Render/Railway backend URL
-3. Deploy
-
-## Scope cuts (intentionally deferred)
-
-- JWT auth / account login (guest mode only for MVP)
-- Sleeper-berth split (§395.1(g))
-- Adverse driving conditions (§395.1(b))
-- Team drivers / co-drivers
-- PDF export of log sheets
-- Short-haul exemptions
+---
 
 ## Project structure
 
 ```
 trip/
 ├── backend/
-│   ├── config/           Django settings & URLs
+│   ├── config/              Django settings & URLs
 │   ├── trips/
-│   │   ├── models.py     Trip, RouteStop, DutyStatusSegment
+│   │   ├── models.py        Trip, RouteStop, DutyStatusSegment
 │   │   ├── hos_constants.py
 │   │   └── services/
 │   │       ├── hos_engine.py
@@ -157,9 +275,26 @@ trip/
 │   └── tests/
 ├── frontend/
 │   └── src/
-│       ├── components/   MapView, LogSheet, TripForm
-│       ├── pages/        Landing, Plan, Results
-│       └── context/      GuestContext
+│       ├── pages/           Landing, PlanTrip, TripResults, NotFound
+│       ├── components/      TripMap, FMCSALogSheet, DaySelector, …
+│       └── context/         GuestContext, ToastContext
 ├── docker-compose.yml
-└── render.yaml
+├── render.yaml
+└── .github/workflows/ci.yml
 ```
+
+---
+
+## Intentionally deferred
+
+- JWT auth / account login (guest mode only for MVP)
+- Sleeper-berth split (§395.1(g))
+- Adverse driving conditions (§395.1(b))
+- Team drivers
+- Certified ELD device output
+
+---
+
+## License
+
+MIT — for dispatch planning only, not a certified ELD device.
