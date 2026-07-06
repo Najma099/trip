@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: spotter-trip-api
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python manage.py migrate --noinput
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: spotter-trip-db
+          property: connectionString
+      - key: ORS_API_KEY
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+    healthCheckPath: /api/geocode/?text=tx
+
+  - type: pserv
+    name: spotter-trip-db
+    runtime: postgresql
+    plan: free
+    ipAllowList: []
