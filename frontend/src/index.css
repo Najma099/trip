@@ -1,3 +1,22 @@
-body {
-  margin: 0;
+@import 'tailwindcss';
+@import './styles/theme.css';
+
+@layer base {
+  body {
+    @apply antialiased;
+    font-family: var(--font-body);
+    color: var(--sp-text);
+    background: var(--sp-bg);
+  }
+}
+
+@layer utilities {
+  .font-sora {
+    font-family: var(--font-display);
+  }
+
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.14em];
+    color: var(--sp-accent);
+  }
 }

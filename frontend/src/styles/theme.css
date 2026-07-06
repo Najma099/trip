@@ -1,137 +1,129 @@
-/**
- * Spotter Trip Planner — Design System
- * All components MUST use these tokens. No ad-hoc hex values in component CSS.
- */
 :root {
-  /* ── Brand ── */
-  --brand-primary: #1e293b;       /* deep slate-navy — trust, logistics */
-  --brand-primary-hover: #0f172a;
-  --brand-accent: #0891b2;        /* cyan-teal — CTAs, active states (sparingly) */
-  --brand-accent-hover: #0e7490;
-  --brand-accent-soft: rgba(8, 145, 178, 0.1);
-  --brand-accent-muted: rgba(8, 145, 178, 0.06);
+  /* Brand */
+  --sp-primary: #1e3a8a;
+  --sp-primary-600: #1e40af;
+  --sp-accent: #0ea5e9;
+  --sp-accent-600: #0284c7;
+  --sp-dark: #0f172a;
 
-  /* ── Surfaces ── */
-  --bg-page: #f1f5f9;
-  --bg-surface: #ffffff;
-  --bg-surface-raised: #ffffff;
-  --bg-surface-sunken: #f8fafc;
-  --bg-inverse: #0f172a;
-  --bg-inverse-soft: #1e293b;
+  /* Surfaces */
+  --sp-bg: #f1f5f9;
+  --sp-surface: #ffffff;
 
-  /* ── Text ── */
-  --text-primary: #0f172a;
-  --text-secondary: #64748b;
-  --text-tertiary: #94a3b8;
-  --text-inverse: #f8fafc;
-  --text-inverse-muted: #94a3b8;
+  /* Text */
+  --sp-text: #0f172a;
+  --sp-text-secondary: #64748b;
+  --sp-text-tertiary: #94a3b8;
 
-  /* ── Borders ── */
-  --border-default: #e2e8f0;
-  --border-strong: #cbd5e1;
-  --border-focus: var(--brand-accent);
+  /* Borders */
+  --sp-border: #e2e8f0;
+  --sp-border-strong: #cbd5e1;
 
-  /* ── Semantic ── */
-  --color-success: #059669;
-  --color-success-bg: rgba(5, 150, 105, 0.08);
-  --color-danger: #dc2626;
-  --color-danger-bg: rgba(220, 38, 38, 0.08);
-  --color-warning: #d97706;
-
-  /* ── Duty status (charts + log sheets) ── */
-  --duty-driving: #2563eb;
-  --duty-driving-soft: rgba(37, 99, 235, 0.12);
-  --duty-on: #d97706;
-  --duty-on-soft: rgba(217, 119, 6, 0.12);
+  /* Duty status */
+  --duty-driving: #1e3a8a;
+  --duty-on: #0ea5e9;
   --duty-off: #64748b;
-  --duty-off-soft: rgba(100, 116, 139, 0.12);
   --duty-sleeper: #7c3aed;
 
-  /* ── Map stop markers ── */
+  /* Map stops */
   --stop-pickup: #2563eb;
   --stop-dropoff: #7c3aed;
   --stop-fuel: #d97706;
   --stop-rest: #059669;
   --stop-break: #0891b2;
   --stop-deadhead: #64748b;
-  --route-line: #2563eb;
-  --route-line-glow: rgba(37, 99, 235, 0.25);
+  --route-line: #0ea5e9;
 
-  /* ── Typography ── */
+  /* Typography */
   --font-display: 'Sora', 'Inter', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;
+}
 
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: clamp(1.75rem, 3vw, 2.25rem);
-  --text-hero: clamp(2rem, 4vw, 2.75rem);
+/* Animations */
+@keyframes sp-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-  --weight-normal: 400;
-  --weight-medium: 500;
-  --weight-semibold: 600;
-  --weight-bold: 700;
-  --weight-extrabold: 800;
+@keyframes sp-fade-in-quick {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
-  /* ── Spacing scale ── */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.25rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-10: 2.5rem;
-  --space-12: 3rem;
-  --space-16: 4rem;
+@keyframes sp-badge-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
 
-  /* ── Radius ── */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --radius-pill: 999px;
+@keyframes sp-ken-burns {
+  from { transform: scale(1.04); }
+  to { transform: scale(1.08); }
+}
 
-  /* ── Shadows ── */
-  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.1);
-  --shadow-header: 0 1px 0 var(--border-default);
+@keyframes sp-check-draw {
+  from { stroke-dashoffset: 24; }
+  to { stroke-dashoffset: 0; }
+}
 
-  /* ── Motion ── */
-  --duration-fast: 200ms;
-  --duration-normal: 350ms;
-  --duration-slow: 500ms;
-  --duration-chart: 650ms;
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+@keyframes sp-log-draw {
+  to { stroke-dashoffset: 0; }
+}
 
-  /* ── Layout ── */
-  --header-height: 68px;
-  --content-max: 1280px;
-  --content-padding: var(--space-6);
+.sp-fade-up {
+  animation: sp-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
 
-  /* Legacy aliases (existing components) */
-  --color-primary: var(--brand-primary);
-  --color-primary-light: var(--brand-primary);
-  --color-accent: var(--brand-accent);
-  --color-accent-soft: var(--brand-accent-soft);
-  --bg: var(--bg-page);
-  --surface: var(--bg-surface);
-  --surface-2: var(--bg-surface-sunken);
-  --text: var(--text-primary);
-  --muted: var(--text-secondary);
-  --border: var(--border-default);
-  --accent: var(--brand-accent);
-  --accent-hover: var(--brand-accent-hover);
-  --font: var(--font-body);
-  --header-h: var(--header-height);
-  --success: var(--color-success);
-  --success-bg: var(--color-success-bg);
-  --danger: var(--color-danger);
-  --danger-bg: var(--color-danger-bg);
+.sp-fade-in-quick {
+  animation: sp-fade-in-quick 0.35s ease-out both;
+}
+
+.sp-badge-in {
+  animation: sp-badge-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sp-ken-burns {
+  animation: sp-ken-burns 18s ease-in-out infinite alternate;
+}
+
+.sp-check-draw {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: sp-check-draw 0.6s ease-out 0.2s forwards;
+}
+
+.sp-log-path {
+  stroke-dasharray: var(--sp-path-length, 1200);
+  stroke-dashoffset: var(--sp-path-length, 1200);
+  animation: sp-log-draw 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.sp-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sp-border-strong) transparent;
+}
+
+.sp-scroll::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.sp-scroll::-webkit-scrollbar-thumb {
+  background: var(--sp-border-strong);
+  border-radius: 999px;
+}
+
+.leaflet-container {
+  font-family: inherit;
 }

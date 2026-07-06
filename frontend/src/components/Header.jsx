@@ -1,67 +1,79 @@
-import { NavLink, useNavigate } from 'react-router-dom'
-import './Header.css'
-
-function LogoMark() {
-  return (
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-      <rect width="28" height="28" rx="8" fill="var(--brand-accent-soft)" />
-      <path
-        d="M7 18 L14 8 L21 18"
-        stroke="var(--brand-accent)"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-      <line x1="9" y1="18" x2="19" y2="18" stroke="var(--brand-primary)" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-function PersonIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-      <circle cx="7" cy="4.5" r="2.25" stroke="currentColor" strokeWidth="1.4" />
-      <path
-        d="M2.5 12.5c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4"
-        stroke="currentColor"
-        strokeWidth="1.4"
-        strokeLinecap="round"
-      />
-    </svg>
-  )
-}
+import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Plus, ShieldCheck, Truck } from 'lucide-react'
+import { useGuest } from '../context/GuestContext'
 
 export default function Header() {
   const navigate = useNavigate()
+  const { guestId } = useGuest()
+  const handle = guestId ? guestId.replace(/-/g, '').slice(0, 4).toUpperCase() : '----'
 
   return (
-    <header className="site-header">
-      <div className="header-inner">
-        <button type="button" className="logo" onClick={() => navigate('/')}>
-          <LogoMark />
-          <span className="logo-text">
-            Spotter
-            <span className="logo-sub">Trip Planner</span>
+    <header
+      data-testid="app-header"
+      className="sticky top-0 z-40 w-full border-b border-[color:var(--sp-border)] bg-white/85 backdrop-blur-xl"
+    >
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-10">
+        <Link data-testid="header-logo" to="/" className="group flex items-center gap-2.5">
+          <span
+            className="grid h-9 w-9 place-items-center rounded-lg text-white shadow-sm transition-transform group-hover:-translate-y-0.5"
+            style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #0ea5e9 140%)' }}
+          >
+            <Truck size={18} strokeWidth={2.5} aria-hidden="true" />
           </span>
-        </button>
+          <span className="font-sora text-[1.05rem] font-semibold tracking-tight text-[color:var(--sp-text)]">
+            Spotter<span className="text-[color:var(--sp-accent)]">.</span>
+          </span>
+        </Link>
 
-        <nav className="main-nav" aria-label="Main navigation">
-          <NavLink to="/" end className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+        <nav className="hidden items-center gap-1 md:flex" aria-label="Main navigation">
+          <NavLink
+            data-testid="nav-home"
+            to="/"
+            end
+            className={({ isActive }) =>
+              `rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                isActive
+                  ? 'text-[color:var(--sp-primary)]'
+                  : 'text-[color:var(--sp-text-secondary)] hover:text-[color:var(--sp-text)]'
+              }`
+            }
+          >
             Home
           </NavLink>
-          <NavLink to="/plan" className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}>
+          <NavLink
+            data-testid="nav-plan-trip"
+            to="/plan"
+            className={({ isActive }) =>
+              `rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                isActive
+                  ? 'text-[color:var(--sp-primary)]'
+                  : 'text-[color:var(--sp-text-secondary)] hover:text-[color:var(--sp-text)]'
+              }`
+            }
+          >
             Plan Trip
           </NavLink>
         </nav>
 
-        <div className="header-actions">
-          <span className="guest-pill">
-            <PersonIcon />
-            Guest
-          </span>
-          <button type="button" className="btn btn-primary btn-sm" onClick={() => navigate('/plan')}>
-            New Trip
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div
+            data-testid="guest-badge"
+            className="hidden items-center gap-2 rounded-full border border-[color:var(--sp-border)] bg-[color:var(--sp-bg)] px-3 py-1 text-xs font-medium text-[color:var(--sp-text-secondary)] sm:flex"
+            title="Guest session"
+          >
+            <ShieldCheck size={13} className="text-[color:var(--sp-accent)]" aria-hidden="true" />
+            <span>Guest</span>
+            <span className="font-mono text-[10px] text-[color:var(--sp-text-tertiary)]">#{handle}</span>
+          </div>
+          <button
+            type="button"
+            data-testid="header-new-trip-btn"
+            onClick={() => navigate('/plan')}
+            className="inline-flex items-center gap-1.5 rounded-md bg-[color:var(--sp-primary)] px-3.5 py-1.5 text-sm font-medium text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[color:var(--sp-primary-600)] hover:shadow"
+          >
+            <Plus size={15} strokeWidth={2.5} aria-hidden="true" />
+            <span className="hidden sm:inline">New Trip</span>
+            <span className="sm:hidden">New</span>
           </button>
         </div>
       </div>
