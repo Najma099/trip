@@ -110,7 +110,7 @@ export default function TripResults() {
         className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)]"
       >
         <TripMap geometry={trip.route?.geometry} stops={trip.stops} />
-        <StopTimeline stops={trip.stops} />
+        <StopTimeline stops={trip.stops} loadedMiles={trip.route?.loaded_miles} />
       </div>
 
       <div className="flex flex-col gap-3">
