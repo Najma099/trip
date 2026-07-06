@@ -1,15 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { GuestProvider } from './context/GuestContext'
 import LandingPage from './pages/LandingPage'
+import TripFormPage from './pages/TripFormPage'
+import ResultsPage from './pages/ResultsPage'
 import './App.css'
-
-function PlanPlaceholder() {
-  return (
-    <section className="card">
-      <h2>Trip planner loading…</h2>
-    </section>
-  )
-}
 
 function App() {
   return (
@@ -26,7 +20,8 @@ function App() {
           <main className="app-main">
             <Routes>
               <Route path="/" element={<LandingPage />} />
-              <Route path="/plan" element={<PlanPlaceholder />} />
+              <Route path="/plan" element={<TripFormPage />} />
+              <Route path="/results/:tripId" element={<ResultsPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
