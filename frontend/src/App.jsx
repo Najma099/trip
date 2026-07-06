@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { GuestProvider } from './context/GuestContext'
 import Header from './components/Header'
 import Footer from './components/Footer'
@@ -8,13 +8,10 @@ import ResultsPage from './pages/ResultsPage'
 import './App.css'
 
 function AppLayout() {
-  const location = useLocation()
-  const isLanding = location.pathname === '/'
-
   return (
     <div className="app-shell">
       <Header />
-      <main className={`app-main ${isLanding ? 'app-main-wide' : ''}`}>
+      <main className="app-main">
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/plan" element={<TripFormPage />} />

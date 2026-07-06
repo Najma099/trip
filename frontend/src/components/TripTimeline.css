@@ -1,6 +1,6 @@
-.trip-timeline h3 {
-  margin: 0 0 1rem;
-  font-size: 1rem;
+.trip-timeline h2,
+.trip-timeline .section-title {
+  margin: 0 0 var(--space-4);
 }
 
 .timeline-list {
@@ -11,63 +11,58 @@
 
 .timeline-item {
   display: flex;
-  gap: 0.75rem;
-  padding-bottom: 1.25rem;
+  gap: var(--space-3);
+  padding-bottom: var(--space-5);
   position: relative;
-  animation: fadeUp 0.5s ease-out both;
+  animation: slideUp var(--duration-normal) var(--ease-out) both;
 }
 
 .timeline-item:not(:last-child)::before {
   content: '';
   position: absolute;
-  left: 17px;
-  top: 36px;
+  left: 15px;
+  top: 32px;
   bottom: 0;
   width: 2px;
-  background: var(--border);
+  background: var(--border-default);
 }
 
 .timeline-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-surface-sunken);
+  border: 1px solid var(--border-default);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: var(--text-sm);
   flex-shrink: 0;
   z-index: 1;
 }
 
-.timeline-content {
-  flex: 1;
-  min-width: 0;
-}
-
 .timeline-type {
-  font-size: 0.75rem;
+  font-size: var(--text-xs);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  font-weight: var(--weight-semibold);
 }
 
-.type-pickup { color: #3b82f6; }
-.type-dropoff { color: #8b5cf6; }
-.type-fuel { color: #f59e0b; }
-.type-rest { color: #22c55e; }
-.type-break { color: #06b6d4; }
+.type-pickup { color: var(--stop-pickup); }
+.type-dropoff { color: var(--stop-dropoff); }
+.type-fuel { color: var(--stop-fuel); }
+.type-rest { color: var(--stop-rest); }
+.type-break { color: var(--stop-break); }
 
 .timeline-label {
-  margin: 0.15rem 0;
-  font-size: 0.85rem;
-  color: var(--text);
+  margin: var(--space-1) 0;
+  font-size: var(--text-sm);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .timeline-time {
-  font-size: 0.75rem;
-  color: var(--muted);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
 }

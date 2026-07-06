@@ -17,27 +17,26 @@ export default function TripHistory() {
   }, [guestId])
 
   if (loading) return null
-  if (!trips.length) return null
 
   return (
     <aside className="card trip-history">
-      <h3>Your Recent Trips</h3>
-      <ul className="trip-history-list">
-        {trips.map((trip) => (
-          <li key={trip.id} className="trip-history-item">
-            <div>
+      <h2 className="section-title">Recent Trips</h2>
+      {!trips.length ? (
+        <p className="trip-history__empty">No trips yet. Plan your first route.</p>
+      ) : (
+        <ul className="trip-history__list">
+          {trips.map((trip) => (
+            <li key={trip.id} className="trip-history__item">
               <Link to={`/results/${trip.id}`}>
-                {trip.current_location} → {trip.dropoff_location}
+                {trip.current_location?.split(',')[0]} → {trip.dropoff_location?.split(',')[0]}
               </Link>
-              <div className="trip-history-meta">
-                {trip.total_miles?.toFixed?.(0)} mi ·{' '}
-                {trip.is_legal ? 'Legal' : 'Not legal'} ·{' '}
-                {new Date(trip.created_at).toLocaleDateString()}
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
+              <span className="trip-history__meta">
+                {trip.total_miles?.toFixed?.(0)} mi · {trip.is_legal ? 'Legal' : 'Not legal'}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
     </aside>
   )
 }

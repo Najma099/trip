@@ -1,0 +1,56 @@
+.log-sheet__header {
+  margin-bottom: var(--space-4);
+}
+
+.log-sheet__content {
+  animation: fadeSwitch var(--duration-normal) var(--ease-out);
+}
+
+.fade-switch {
+  animation: fadeSwitch var(--duration-normal) var(--ease-out);
+}
+
+@keyframes fadeSwitch {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.log-sheet__totals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-default);
+}
+
+.log-sheet__total {
+  text-align: center;
+}
+
+.log-sheet__total-label {
+  display: block;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-1);
+}
+
+.log-sheet__total-value {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  color: var(--brand-accent);
+}
+
+.log-sheet-empty {
+  text-align: center;
+  color: var(--text-secondary);
+}

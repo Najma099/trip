@@ -4,48 +4,46 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './MapView.css'
 
-const STOP_COLORS = {
-  pickup: '#3b82f6',
-  dropoff: '#8b5cf6',
-  fuel: '#f59e0b',
-  rest: '#22c55e',
-  break: '#06b6d4',
-  deadhead: '#64748b',
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
+
+function stopColors() {
+  return {
+    pickup: cssVar('--stop-pickup'),
+    dropoff: cssVar('--stop-dropoff'),
+    fuel: cssVar('--stop-fuel'),
+    rest: cssVar('--stop-rest'),
+    break: cssVar('--stop-break'),
+    deadhead: cssVar('--stop-deadhead'),
+  }
 }
 
 function makeIcon(color, size = 14) {
   return L.divIcon({
     className: 'custom-marker',
-    html: `<div style="background:${color};width:${size}px;height:${size}px;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.4)"></div>`,
+    html: `<div class="map-marker" style="background:${color};width:${size}px;height:${size}px"></div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
   })
 }
 
-const truckIcon = L.divIcon({
-  className: 'truck-marker',
-  html: `<div class="truck-pin">🚛</div>`,
-  iconSize: [28, 28],
-  iconAnchor: [14, 14],
-})
-
 function FitBounds({ bounds }) {
   const map = useMap()
   useEffect(() => {
-    if (bounds.isValid()) {
-      map.fitBounds(bounds, { padding: [40, 40] })
-    }
+    if (bounds.isValid()) map.fitBounds(bounds, { padding: [40, 40] })
   }, [map, bounds])
   return null
 }
 
 function AnimatedPolyline({ positions, onProgress }) {
   const [count, setCount] = useState(0)
+  const routeColor = cssVar('--route-line')
+  const glowColor = cssVar('--route-line-glow')
 
   useEffect(() => {
     setCount(0)
     if (positions.length < 2) return
-
     const step = Math.max(1, Math.floor(positions.length / 150))
     let current = 0
     const timer = setInterval(() => {
@@ -59,7 +57,6 @@ function AnimatedPolyline({ positions, onProgress }) {
         onProgress?.(current - 1)
       }
     }, 25)
-
     return () => clearInterval(timer)
   }, [positions, onProgress])
 
@@ -68,24 +65,31 @@ function AnimatedPolyline({ positions, onProgress }) {
 
   return (
     <>
-      <Polyline
-        positions={visible}
-        pathOptions={{ color: '#1d4ed8', weight: 6, opacity: 0.2 }}
-      />
-      <Polyline
-        positions={visible}
-        pathOptions={{ color: '#3b82f6', weight: 4, opacity: 0.9 }}
-      />
+      <Polyline positions={visible} pathOptions={{ color: glowColor, weight: 8, opacity: 0.35 }} />
+      <Polyline positions={visible} pathOptions={{ color: routeColor, weight: 4, opacity: 0.95 }} />
     </>
   )
 }
 
 export default function MapView({ geometry = [], stops = [] }) {
   const [truckIndex, setTruckIndex] = useState(0)
+  const [colors, setColors] = useState({})
 
-  const positions = useMemo(
-    () => geometry.map(([lat, lng]) => [lat, lng]),
-    [geometry]
+  useEffect(() => {
+    setColors(stopColors())
+  }, [])
+
+  const positions = useMemo(() => geometry.map(([lat, lng]) => [lat, lng]), [geometry])
+
+  const truckIcon = useMemo(
+    () =>
+      L.divIcon({
+        className: 'truck-marker',
+        html: '<div class="truck-pin"></div>',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      }),
+    []
   )
 
   if (!geometry.length) {
@@ -97,30 +101,23 @@ export default function MapView({ geometry = [], stops = [] }) {
 
   return (
     <div className="map-wrapper card">
-      <div className="map-header">
-        <h3>Route Map</h3>
-        <span className="map-badge">Animated route</span>
+      <div className="map-wrapper__header">
+        <h2 className="section-title">Route Map</h2>
+        <span className="map-wrapper__badge">Live animation</span>
       </div>
-      <MapContainer
-        bounds={bounds}
-        boundsOptions={{ padding: [40, 40] }}
-        scrollWheelZoom={true}
-        className="trip-map"
-      >
+      <MapContainer bounds={bounds} scrollWheelZoom className="trip-map">
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          attribution='&copy; OpenStreetMap &copy; CARTO'
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
         <FitBounds bounds={bounds} />
         <AnimatedPolyline positions={positions} onProgress={setTruckIndex} />
-        {truckPos && (
-          <Marker position={truckPos} icon={truckIcon} zIndexOffset={1000} />
-        )}
+        {truckPos && <Marker position={truckPos} icon={truckIcon} zIndexOffset={1000} />}
         {stops.map((stop, i) => (
           <Marker
             key={`${stop.type}-${i}`}
             position={[stop.lat, stop.lng]}
-            icon={makeIcon(STOP_COLORS[stop.type] || '#94a3b8')}
+            icon={makeIcon(colors[stop.type] || cssVar('--stop-deadhead'))}
           >
             <Popup>
               <strong>{stop.type}</strong>
@@ -133,9 +130,9 @@ export default function MapView({ geometry = [], stops = [] }) {
         ))}
       </MapContainer>
       <div className="map-legend">
-        {Object.entries(STOP_COLORS).map(([type, color]) => (
-          <span key={type} className="legend-item">
-            <span className="legend-dot" style={{ background: color }} />
+        {Object.entries(colors).map(([type, color]) => (
+          <span key={type} className="map-legend__item">
+            <span className="map-legend__dot" style={{ background: color }} />
             {type}
           </span>
         ))}

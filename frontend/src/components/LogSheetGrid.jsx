@@ -10,12 +10,12 @@ const CHART_WIDTH = 24 * HOUR_WIDTH + 60
 
 function timeToX(timeStr) {
   const [h, m] = timeStr.split(':').map(Number)
-  return 50 + (h + m / 60) * HOUR_WIDTH
+  const hours = timeStr === '24:00' ? 24 : h + m / 60
+  return 50 + hours * HOUR_WIDTH
 }
 
 function buildPolylinePoints(segments) {
   if (!segments.length) return { linePoints: '', connectors: [] }
-
   const points = []
   const connectors = []
 
@@ -29,9 +29,7 @@ function buildPolylinePoints(segments) {
     } else {
       const prev = segments[i - 1]
       const prevY = ROW_Y[prev.status] ?? ROW_Y.off
-      if (prevY !== y) {
-        connectors.push({ x: x1, y1: prevY, y2: y })
-      }
+      if (prevY !== y) connectors.push({ x: x1, y1: prevY, y2: y })
       points.push(`${x1},${y}`)
     }
     points.push(`${x2},${y}`)
@@ -42,19 +40,28 @@ function buildPolylinePoints(segments) {
 
 export default function LogSheetGrid({ segments = [], date }) {
   const { linePoints, connectors } = buildPolylinePoints(segments)
+  const formatted = new Date(date + 'T12:00:00').toLocaleDateString('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
 
   return (
-    <div className="log-sheet-grid">
-      <h4 className="log-date">{date}</h4>
-      <svg viewBox={`0 0 ${CHART_WIDTH} 180`} className="log-svg" role="img" aria-label={`Daily log for ${date}`}>
-        {/* Hour grid */}
+    <div className="log-grid">
+      <p className="log-grid__date">{formatted}</p>
+      <svg viewBox={`0 0 ${CHART_WIDTH} 180`} className="log-grid__svg" role="img" aria-label={`Daily log for ${date}`}>
         {Array.from({ length: 25 }, (_, h) => {
           const x = 50 + h * HOUR_WIDTH
           return (
             <g key={h}>
-              <line x1={x} y1={0} x2={x} y2={160} stroke="#334155" strokeWidth={h % 4 === 0 ? 1 : 0.5} />
+              <line
+                x1={x} y1={0} x2={x} y2={160}
+                stroke="var(--border-default)"
+                strokeWidth={h % 4 === 0 ? 1 : 0.5}
+              />
               {h < 24 && h % 3 === 0 && (
-                <text x={x + 2} y={175} fill="#64748b" fontSize="9">
+                <text x={x + 2} y={175} fill="var(--text-tertiary)" fontSize="9">
                   {String(h).padStart(2, '0')}
                 </text>
               )}
@@ -62,52 +69,36 @@ export default function LogSheetGrid({ segments = [], date }) {
           )
         })}
 
-        {/* Row labels and baselines */}
         {ROW_LABELS.map(({ key, label }) => {
           const y = ROW_Y[key]
           return (
             <g key={key}>
-              <text x={0} y={y + 4} fill="#94a3b8" fontSize="9">
-                {label}
-              </text>
-              <line x1={50} y1={y} x2={CHART_WIDTH - 10} y2={y} stroke="#475569" strokeWidth={1} />
+              <text x={0} y={y + 4} fill="var(--text-secondary)" fontSize="9">{label}</text>
+              <line x1={50} y1={y} x2={CHART_WIDTH - 10} y2={y} stroke="var(--border-strong)" strokeWidth={1} />
             </g>
           )
         })}
 
-        {/* Vertical connectors at status changes */}
         {connectors.map((c, i) => (
-          <line
-            key={i}
-            x1={c.x}
-            y1={c.y1}
-            x2={c.x}
-            y2={c.y2}
-            stroke="#e2e8f0"
-            strokeWidth={2}
-          />
+          <line key={i} x1={c.x} y1={c.y1} x2={c.x} y2={c.y2} stroke="var(--brand-primary)" strokeWidth={2} />
         ))}
 
-        {/* Duty status timeline */}
         {linePoints && (
-          <polyline
-            points={linePoints}
-            fill="none"
-            stroke="#e2e8f0"
-            strokeWidth={2.5}
-            strokeLinejoin="round"
-          />
+          <polyline points={linePoints} fill="none" stroke="var(--brand-primary)" strokeWidth={2.5} strokeLinejoin="round" />
         )}
       </svg>
 
-      <div className="log-segment-list">
+      <ul className="log-grid__segments">
         {segments.map((seg, i) => (
-          <span key={i} className={`log-seg log-seg-${seg.status}`}>
-            {seg.status}: {seg.start}–{seg.end}
-            {seg.remark ? ` — ${seg.remark}` : seg.location ? ` — ${seg.location}` : ''}
-          </span>
+          <li key={i} className={`log-seg log-seg--${seg.status}`}>
+            <span className="log-seg__time">{seg.start}–{seg.end}</span>
+            <span className="log-seg__status">{seg.status}</span>
+            {(seg.remark || seg.location) && (
+              <span className="log-seg__remark">{seg.remark || seg.location}</span>
+            )}
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   )
 }

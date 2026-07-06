@@ -1,48 +1,136 @@
+/**
+ * Spotter Trip Planner — Design System
+ * All components MUST use these tokens. No ad-hoc hex values in component CSS.
+ */
 :root {
-  /* Color system — deep navy + sky accent (trust + logistics) */
-  --color-primary: #1e3a8a;
-  --color-primary-light: #2563eb;
-  --color-accent: #0ea5e9;
-  --color-accent-soft: rgba(14, 165, 233, 0.12);
+  /* ── Brand ── */
+  --brand-primary: #1e293b;       /* deep slate-navy — trust, logistics */
+  --brand-primary-hover: #0f172a;
+  --brand-accent: #0891b2;        /* cyan-teal — CTAs, active states (sparingly) */
+  --brand-accent-hover: #0e7490;
+  --brand-accent-soft: rgba(8, 145, 178, 0.1);
+  --brand-accent-muted: rgba(8, 145, 178, 0.06);
 
-  --bg-page: #f4f6f9;
+  /* ── Surfaces ── */
+  --bg-page: #f1f5f9;
   --bg-surface: #ffffff;
-  --bg-surface-alt: #f8fafc;
-  --bg-dark: #0f172a;
-  --bg-dark-soft: #1e293b;
+  --bg-surface-raised: #ffffff;
+  --bg-surface-sunken: #f8fafc;
+  --bg-inverse: #0f172a;
+  --bg-inverse-soft: #1e293b;
 
+  /* ── Text ── */
   --text-primary: #0f172a;
   --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
   --text-inverse: #f8fafc;
+  --text-inverse-muted: #94a3b8;
 
-  --border: #e2e8f0;
+  /* ── Borders ── */
+  --border-default: #e2e8f0;
   --border-strong: #cbd5e1;
+  --border-focus: var(--brand-accent);
 
-  --success: #059669;
-  --success-bg: rgba(5, 150, 105, 0.08);
-  --danger: #dc2626;
-  --danger-bg: rgba(220, 38, 38, 0.08);
-  --warning: #d97706;
+  /* ── Semantic ── */
+  --color-success: #059669;
+  --color-success-bg: rgba(5, 150, 105, 0.08);
+  --color-danger: #dc2626;
+  --color-danger-bg: rgba(220, 38, 38, 0.08);
+  --color-warning: #d97706;
 
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.12);
+  /* ── Duty status (charts + log sheets) ── */
+  --duty-driving: #2563eb;
+  --duty-driving-soft: rgba(37, 99, 235, 0.12);
+  --duty-on: #d97706;
+  --duty-on-soft: rgba(217, 119, 6, 0.12);
+  --duty-off: #64748b;
+  --duty-off-soft: rgba(100, 116, 139, 0.12);
+  --duty-sleeper: #7c3aed;
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  /* ── Map stop markers ── */
+  --stop-pickup: #2563eb;
+  --stop-dropoff: #7c3aed;
+  --stop-fuel: #d97706;
+  --stop-rest: #059669;
+  --stop-break: #0891b2;
+  --stop-deadhead: #64748b;
+  --route-line: #2563eb;
+  --route-line-glow: rgba(37, 99, 235, 0.25);
+
+  /* ── Typography ── */
+  --font-display: 'Sora', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: clamp(1.75rem, 3vw, 2.25rem);
+  --text-hero: clamp(2rem, 4vw, 2.75rem);
+
+  --weight-normal: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --weight-extrabold: 800;
+
+  /* ── Spacing scale ── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ── Radius ── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
   --radius-pill: 999px;
 
-  --font: 'Inter', system-ui, -apple-system, sans-serif;
-  --header-h: 72px;
+  /* ── Shadows ── */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.1);
+  --shadow-header: 0 1px 0 var(--border-default);
 
-  /* Legacy aliases used in components */
+  /* ── Motion ── */
+  --duration-fast: 200ms;
+  --duration-normal: 350ms;
+  --duration-slow: 500ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Layout ── */
+  --header-height: 68px;
+  --content-max: 1280px;
+  --content-padding: var(--space-6);
+
+  /* Legacy aliases (existing components) */
+  --color-primary: var(--brand-primary);
+  --color-primary-light: var(--brand-primary);
+  --color-accent: var(--brand-accent);
+  --color-accent-soft: var(--brand-accent-soft);
   --bg: var(--bg-page);
   --surface: var(--bg-surface);
-  --surface-2: var(--bg-surface-alt);
+  --surface-2: var(--bg-surface-sunken);
   --text: var(--text-primary);
   --muted: var(--text-secondary);
-  --accent: var(--color-primary-light);
-  --accent-hover: var(--color-primary);
+  --border: var(--border-default);
+  --accent: var(--brand-accent);
+  --accent-hover: var(--brand-accent-hover);
+  --font: var(--font-body);
+  --header-h: var(--header-height);
+  --success: var(--color-success);
+  --success-bg: var(--color-success-bg);
+  --danger: var(--color-danger);
+  --danger-bg: var(--color-danger-bg);
 }
