@@ -18,6 +18,9 @@ export default function LogSheet({ dailyLogs = [] }) {
           <div className="log-totals">
             <span>Driving: {day.total_driving_hours}h</span>
             <span>On Duty: {day.total_on_duty_hours}h</span>
+            {day.total_off_duty_hours != null && (
+              <span>Off Duty: {day.total_off_duty_hours}h</span>
+            )}
           </div>
         </div>
       ))}

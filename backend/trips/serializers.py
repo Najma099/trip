@@ -117,9 +117,19 @@ class TripDetailSerializer(serializers.ModelSerializer):
         return [
             {
                 "date": log.date,
-                "segments": [{"status": s.status, "start": s.start, "end": s.end} for s in log.segments],
+                "segments": [
+                    {
+                        "status": s.status,
+                        "start": s.start,
+                        "end": s.end,
+                        "location": s.location,
+                        "remark": s.remark,
+                    }
+                    for s in log.segments
+                ],
                 "total_driving_hours": log.total_driving_hours,
                 "total_on_duty_hours": log.total_on_duty_hours,
+                "total_off_duty_hours": log.total_off_duty_hours,
             }
             for log in logs
         ]

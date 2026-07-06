@@ -63,7 +63,8 @@ def test_route_hgv_returns_leg(mock_session_cls):
     assert leg.geometry[0] == [32.7767, -96.797]
 
 
-def test_geocode_without_api_key_raises():
+def test_geocode_without_api_key_raises(settings):
+    settings.ORS_API_KEY = ""
     client = ORSClient(api_key="")
     with pytest.raises(RoutingError, match="ORS_API_KEY"):
         client.geocode("Dallas, TX")

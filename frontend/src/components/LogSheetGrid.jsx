@@ -104,6 +104,7 @@ export default function LogSheetGrid({ segments = [], date }) {
         {segments.map((seg, i) => (
           <span key={i} className={`log-seg log-seg-${seg.status}`}>
             {seg.status}: {seg.start}–{seg.end}
+            {seg.remark ? ` — ${seg.remark}` : seg.location ? ` — ${seg.location}` : ''}
           </span>
         ))}
       </div>
