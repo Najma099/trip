@@ -18,6 +18,8 @@ def _start() -> datetime:
 def test_daily_reset_restores_drive_and_window():
     engine = HOSEngine(current_cycle_used_hrs=0, start_time=_start())
     engine.drive(200, avg_speed_mph=50)  # ~4 hours
+    # Split berth: 8h sleeper then 2h off completes the 10-hour reset
+    engine._insert_daily_reset()
     engine._insert_daily_reset()
     assert engine.remaining_drive == MAX_DRIVE_MINUTES
     assert engine.remaining_window == MAX_WINDOW_MINUTES
@@ -91,8 +93,9 @@ def test_long_haul_multi_day_simulation():
 
     rest_segments = [
         s for s in result.segments
-        if s.status == "off" and (s.end_time - s.start_time).total_seconds() >= DAILY_RESET_MINUTES * 60
+        if s.status == "sleeper"
+        and (s.end_time - s.start_time).total_seconds() >= 8 * 3600
     ]
-    assert len(rest_segments) >= 1  # multi-day trip requires 10hr resets
+    assert len(rest_segments) >= 1  # multi-day trip requires sleeper-berth resets
 
     assert result.cycle_used_at_end <= 70

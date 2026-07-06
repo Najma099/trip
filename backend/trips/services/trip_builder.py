@@ -23,6 +23,7 @@ def persist_trip(
             start_at=simulation.start_at,
             end_at=simulation.end_at,
             total_miles=simulation.distance_miles,
+            loaded_miles=simulation.loaded_miles,
             total_drive_hours=simulation.total_drive_hours,
             is_legal=simulation.is_legal,
             cycle_used_at_end=simulation.cycle_used_at_end,

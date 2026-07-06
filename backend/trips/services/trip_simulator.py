@@ -14,7 +14,7 @@ from trips.hos_constants import (
 )
 from trips.services.hos_engine import HOSEngine, SegmentRecord
 from trips.services.log_builder import DailyLog, build_daily_logs
-from trips.services.routing import GeoPoint, ORSClient, RouteLeg, haversine_km
+from trips.services.routing import GeoPoint, LegProgress, ORSClient, RouteLeg, haversine_km
 
 
 @dataclass
@@ -34,6 +34,7 @@ class TripSimulationResult:
     daily_logs: list[DailyLog] = field(default_factory=list)
     route_geometry: list[list[float]] = field(default_factory=list)
     distance_miles: float = 0.0
+    loaded_miles: float = 0.0
     duration_hours: float = 0.0
     total_drive_hours: float = 0.0
     start_at: datetime | None = None
@@ -50,32 +51,45 @@ def _default_start_time() -> datetime:
 
 def _drive_with_fuel_stops(
     engine: HOSEngine,
-    distance_miles: float,
-    lat: float,
-    lng: float,
-    location_label: str,
+    leg: RouteLeg,
     stops: list[StopRecord],
+    destination_label: str,
 ) -> bool:
-    remaining = distance_miles
+    progress = LegProgress(leg.geometry, leg.distance_miles, destination_label)
+    remaining = leg.distance_miles
+
     while remaining > 0.01:
         chunk = min(remaining, FUEL_INTERVAL_MILES)
-        if not engine.drive(chunk, avg_speed_mph=DEFAULT_AVG_SPEED_MPH, lat=lat, lng=lng, location_label=location_label):
+        if not engine.drive(
+            chunk,
+            avg_speed_mph=DEFAULT_AVG_SPEED_MPH,
+            progress=progress,
+        ):
             return False
         remaining -= chunk
+
         if remaining > 0.01:
+            point = progress.current_point()
             fuel_start = engine.clock
-            if not engine.on_duty(30, lat=lat, lng=lng, location_label=f"Fuel stop — {location_label}"):
+            if not engine.on_duty(
+                30,
+                lat=point.lat,
+                lng=point.lng,
+                location_label=f"Fuel stop — {point.label}",
+                progress=progress,
+            ):
                 return False
             stops.append(
                 StopRecord(
                     stop_type="fuel",
-                    lat=lat,
-                    lng=lng,
-                    location_label=f"Fuel stop — {location_label}",
+                    lat=point.lat,
+                    lng=point.lng,
+                    location_label=f"Fuel stop — {point.label}",
                     arrival_time=fuel_start,
                     departure_time=engine.clock,
                 )
             )
+
     return True
 
 
@@ -131,56 +145,73 @@ def simulate_trip(
 
     total_miles = sum(leg.distance_miles for leg in legs)
     total_duration = sum(leg.duration_hours for leg in legs)
+    loaded_leg = legs[-1]
+    loaded_miles = loaded_leg.distance_miles
 
     engine = HOSEngine(current_cycle_used_hrs=current_cycle_used, start_time=start)
     stops: list[StopRecord] = []
 
-    # Pre-trip inspection at current location
-    engine.on_duty(PRE_TRIP_ON_DUTY_MINUTES, lat=current.lat, lng=current.lng, location_label=current.label)
+    engine.on_duty(
+        PRE_TRIP_ON_DUTY_MINUTES,
+        lat=current.lat,
+        lng=current.lng,
+        location_label=current.label,
+    )
 
     if not skip_deadhead:
         deadhead = legs[0]
+        deadhead_progress = LegProgress(
+            deadhead.geometry,
+            deadhead.distance_miles,
+            pickup_location,
+        )
         if not engine.drive(
             deadhead.distance_miles,
             avg_speed_mph=DEFAULT_AVG_SPEED_MPH,
-            lat=deadhead.start.lat,
-            lng=deadhead.start.lng,
-            location_label=f"Deadhead to {pickup.label}",
+            progress=deadhead_progress,
         ):
-            return _build_partial_result(engine, stops, geometry, total_miles, total_duration)
+            return _build_partial_result(
+                engine, stops, geometry, total_miles, loaded_miles, total_duration
+            )
 
-    # Pickup — 1 hour on duty
     if not _record_stop_from_on_duty(engine, "pickup", PICKUP_ON_DUTY_MINUTES, pickup, stops):
-        return _build_partial_result(engine, stops, geometry, total_miles, total_duration)
+        return _build_partial_result(engine, stops, geometry, total_miles, loaded_miles, total_duration)
 
-    loaded_leg = legs[-1]
-    if not _drive_with_fuel_stops(
-        engine,
-        loaded_leg.distance_miles,
-        loaded_leg.end.lat,
-        loaded_leg.end.lng,
-        loaded_leg.end.label,
-        stops,
-    ):
-        return _build_partial_result(engine, stops, geometry, total_miles, total_duration)
+    if not _drive_with_fuel_stops(engine, loaded_leg, stops, dropoff_location):
+        return _build_partial_result(engine, stops, geometry, total_miles, loaded_miles, total_duration)
 
-    # Dropoff — 1 hour on duty
     if not _record_stop_from_on_duty(engine, "dropoff", DROPOFF_ON_DUTY_MINUTES, dropoff, stops):
-        return _build_partial_result(engine, stops, geometry, total_miles, total_duration)
+        return _build_partial_result(engine, stops, geometry, total_miles, loaded_miles, total_duration)
 
-    # Collect rest/break stops from off-duty segments >= 30 min (excluding short breaks counted as stops)
     for seg in engine.segments:
         duration_min = (seg.end_time - seg.start_time).total_seconds() / 60
         if seg.status == "off" and duration_min >= 30:
-            stop_type = "rest" if duration_min >= 600 else "break"
+            label = seg.location_label or ""
             if duration_min >= 34 * 60:
                 stop_type = "rest"
+            elif duration_min >= 600:
+                stop_type = "rest"
+            elif "split berth completion" in label.lower():
+                stop_type = "rest"
+            else:
+                stop_type = "break"
             stops.append(
                 StopRecord(
                     stop_type=stop_type,
                     lat=seg.location_lat or dropoff.lat,
                     lng=seg.location_lng or dropoff.lng,
                     location_label=seg.location_label or "Rest stop",
+                    arrival_time=seg.start_time,
+                    departure_time=seg.end_time,
+                )
+            )
+        elif seg.status == "sleeper" and duration_min >= 480:
+            stops.append(
+                StopRecord(
+                    stop_type="rest",
+                    lat=seg.location_lat or dropoff.lat,
+                    lng=seg.location_lng or dropoff.lng,
+                    location_label=seg.location_label or "Sleeper berth",
                     arrival_time=seg.start_time,
                     departure_time=seg.end_time,
                 )
@@ -197,6 +228,7 @@ def simulate_trip(
         daily_logs=build_daily_logs(result.segments),
         route_geometry=geometry,
         distance_miles=round(total_miles, 2),
+        loaded_miles=round(loaded_miles, 2),
         duration_hours=round(total_duration, 2),
         total_drive_hours=round(drive_hours, 2),
         start_at=result.segments[0].start_time if result.segments else start,
@@ -223,6 +255,7 @@ def _build_partial_result(
     stops: list[StopRecord],
     geometry: list[list[float]],
     total_miles: float,
+    loaded_miles: float,
     total_duration: float,
 ) -> TripSimulationResult:
     result = engine.finish()
@@ -235,6 +268,7 @@ def _build_partial_result(
         daily_logs=build_daily_logs(result.segments) if result.is_legal else [],
         route_geometry=geometry,
         distance_miles=round(total_miles, 2),
+        loaded_miles=round(loaded_miles, 2),
         duration_hours=round(total_duration, 2),
         total_drive_hours=round(drive_hours, 2),
         start_at=result.segments[0].start_time if result.segments else None,

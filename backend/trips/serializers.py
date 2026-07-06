@@ -92,6 +92,7 @@ class TripDetailSerializer(serializers.ModelSerializer):
         return {
             "geometry": obj.route_geometry,
             "distance_miles": obj.total_miles,
+            "loaded_miles": obj.loaded_miles,
             "duration_hours": duration_hours,
         }
 

@@ -38,6 +38,12 @@ class TripListCreateView(APIView):
                 },
                 status=status.HTTP_502_BAD_GATEWAY,
             )
+        except Exception as exc:
+            # Surface migration/DB issues clearly instead of a bare 500 in the client.
+            return Response(
+                {"detail": f"Trip planning failed: {exc}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         return Response(TripDetailSerializer(trip).data, status=status.HTTP_201_CREATED)
 

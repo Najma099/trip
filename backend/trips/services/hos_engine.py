@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from trips.hos_constants import (
     BREAK_AFTER_DRIVE_MINUTES,
@@ -12,7 +12,12 @@ from trips.hos_constants import (
     MAX_CYCLE_HOURS,
     MAX_DRIVE_MINUTES,
     MAX_WINDOW_MINUTES,
+    SLEEPER_BERTH_LONG_MINUTES,
+    SLEEPER_BERTH_SHORT_MINUTES,
 )
+
+if TYPE_CHECKING:
+    from trips.services.routing import LegProgress
 
 DutyStatus = Literal["off", "sleeper", "driving", "on"]
 
@@ -49,11 +54,24 @@ class HOSEngine:
         self.is_legal = True
         self.not_legal_reason = ""
         self._on_duty_since_window_start = False
+        self._split_berth_pending = False
 
     @property
     def cycle_used_at_end(self) -> float:
         cycle_minutes_used = (MAX_CYCLE_HOURS * 60) - self.remaining_cycle
         return round(cycle_minutes_used / 60, 2)
+
+    def _resolve_location(
+        self,
+        progress: LegProgress | None,
+        lat: float | None,
+        lng: float | None,
+        location_label: str,
+    ) -> tuple[float | None, float | None, str]:
+        if progress is not None:
+            point = progress.current_point()
+            return point.lat, point.lng, point.label
+        return lat, lng, location_label or ""
 
     def add_segment(
         self,
@@ -104,6 +122,7 @@ class HOSEngine:
         self.remaining_window = MAX_WINDOW_MINUTES
         self.driving_since_break = 0
         self._on_duty_since_window_start = False
+        self._split_berth_pending = False
 
     def _apply_cycle_restart(self) -> None:
         self._apply_daily_reset()
@@ -118,25 +137,54 @@ class HOSEngine:
         lat: float | None = None,
         lng: float | None = None,
         location_label: str = "",
+        progress: LegProgress | None = None,
     ) -> bool:
-        return self.add_segment("off", DAILY_RESET_MINUTES, lat, lng, location_label or "Rest stop")
+        lat, lng, label = self._resolve_location(progress, lat, lng, location_label)
+
+        if self._split_berth_pending:
+            if not self.add_segment(
+                "off",
+                SLEEPER_BERTH_SHORT_MINUTES,
+                lat,
+                lng,
+                label or "Off-duty (split berth completion)",
+            ):
+                return False
+            self._apply_daily_reset()
+            return True
+
+        if not self.add_segment(
+            "sleeper",
+            SLEEPER_BERTH_LONG_MINUTES,
+            lat,
+            lng,
+            label or "Sleeper berth (8h)",
+        ):
+            return False
+        self._split_berth_pending = True
+        return True
 
     def _insert_break(
         self,
         lat: float | None = None,
         lng: float | None = None,
         location_label: str = "",
+        progress: LegProgress | None = None,
     ) -> bool:
+        lat, lng, label = self._resolve_location(progress, lat, lng, location_label)
         self.driving_since_break = 0
-        return self.add_segment("off", BREAK_DURATION_MINUTES, lat, lng, location_label or "Break")
+        return self.add_segment("off", BREAK_DURATION_MINUTES, lat, lng, label or "Break")
 
     def _insert_restart(
         self,
         lat: float | None = None,
         lng: float | None = None,
         location_label: str = "",
+        progress: LegProgress | None = None,
     ) -> bool:
-        return self.add_segment("off", CYCLE_RESTART_MINUTES, lat, lng, location_label or "34-hour restart")
+        lat, lng, label = self._resolve_location(progress, lat, lng, location_label)
+        self._split_berth_pending = False
+        return self.add_segment("off", CYCLE_RESTART_MINUTES, lat, lng, label or "34-hour restart")
 
     def on_duty(
         self,
@@ -144,13 +192,15 @@ class HOSEngine:
         lat: float | None = None,
         lng: float | None = None,
         location_label: str = "",
+        progress: LegProgress | None = None,
     ) -> bool:
         if not self.is_legal:
             return False
+        lat, lng, label = self._resolve_location(progress, lat, lng, location_label)
         if self.remaining_cycle <= 0:
-            if not self._insert_restart(lat, lng, location_label):
+            if not self._insert_restart(lat, lng, label, progress):
                 return False
-        return self.add_segment("on", duration_minutes, lat, lng, location_label)
+        return self.add_segment("on", duration_minutes, lat, lng, label)
 
     def drive(
         self,
@@ -159,6 +209,7 @@ class HOSEngine:
         lat: float | None = None,
         lng: float | None = None,
         location_label: str = "",
+        progress: LegProgress | None = None,
     ) -> bool:
         if not self.is_legal:
             return False
@@ -167,15 +218,15 @@ class HOSEngine:
 
         while total_minutes > 0.01:
             if self.remaining_cycle <= 0:
-                if not self._insert_restart(lat, lng, location_label):
+                if not self._insert_restart(lat, lng, location_label, progress):
                     return False
 
-            if self.remaining_window <= 0 or self.remaining_drive <= 0:
-                if not self._insert_daily_reset(lat, lng, location_label):
+            while self.remaining_window <= 0 or self.remaining_drive <= 0:
+                if not self._insert_daily_reset(lat, lng, location_label, progress):
                     return False
 
             if self.driving_since_break >= BREAK_AFTER_DRIVE_MINUTES:
-                if not self._insert_break(lat, lng, location_label):
+                if not self._insert_break(lat, lng, location_label, progress):
                     return False
 
             chunk = min(
@@ -192,8 +243,13 @@ class HOSEngine:
                 )
                 return False
 
-            if not self.add_segment("driving", chunk, lat, lng, location_label):
+            drive_lat, drive_lng, drive_label = self._resolve_location(progress, lat, lng, location_label)
+            if not self.add_segment("driving", chunk, drive_lat, drive_lng, drive_label):
                 return False
+
+            if progress is not None:
+                progress.advance((chunk / 60) * avg_speed_mph)
+
             total_minutes -= chunk
 
         return True

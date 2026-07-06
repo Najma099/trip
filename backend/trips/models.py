@@ -10,6 +10,7 @@ class Trip(models.Model):
     start_at = models.DateTimeField(null=True, blank=True)
     end_at = models.DateTimeField(null=True, blank=True)
     total_miles = models.FloatField(null=True, blank=True)
+    loaded_miles = models.FloatField(null=True, blank=True)
     total_drive_hours = models.FloatField(null=True, blank=True)
     is_legal = models.BooleanField(default=True)
     cycle_used_at_end = models.FloatField(null=True, blank=True)

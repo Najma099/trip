@@ -62,8 +62,14 @@ def _remark_for_segment(seg: SegmentRecord) -> str:
             return f"34-hour restart — {label}"
         if duration_min >= 600:
             return f"10-hour rest — {label}"
+        if "split berth completion" in label.lower():
+            return f"2-hour off-duty (split berth) — {label}"
         if duration_min >= 30:
             return f"30-minute break — {label}"
+    if seg.status == "sleeper":
+        if duration_min >= 480:
+            return f"8-hour sleeper berth — {label}"
+        return label
     if seg.status == "on" and "Fuel" in label:
         return label
     if seg.status == "driving":

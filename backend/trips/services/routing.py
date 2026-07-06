@@ -63,7 +63,12 @@ class ORSClient:
             raise RoutingError("ORS_API_KEY is not configured")
         resp = self.session.get(
             f"{ORS_BASE}/geocode/search",
-            params={"api_key": self.api_key, "text": text, "size": 1},
+            params={
+                "api_key": self.api_key,
+                "text": text,
+                "size": 1,
+                "boundary.country": "USA",
+            },
             timeout=30,
         )
         if resp.status_code != 200:
@@ -86,7 +91,12 @@ class ORSClient:
             raise RoutingError("ORS_API_KEY is not configured")
         resp = self.session.get(
             f"{ORS_BASE}/geocode/search",
-            params={"api_key": self.api_key, "text": text, "size": size},
+            params={
+                "api_key": self.api_key,
+                "text": text,
+                "size": size,
+                "boundary.country": "USA",
+            },
             timeout=30,
         )
         if resp.status_code != 200:
@@ -134,3 +144,72 @@ class ORSClient:
             start=start,
             end=end,
         )
+
+
+def _geometry_segment_lengths_km(geometry: list[list[float]]) -> list[float]:
+    if len(geometry) < 2:
+        return []
+    return [
+        haversine_km(geometry[i][0], geometry[i][1], geometry[i + 1][0], geometry[i + 1][1])
+        for i in range(len(geometry) - 1)
+    ]
+
+
+def interpolate_along_geometry(
+    geometry: list[list[float]],
+    distance_miles: float,
+    total_miles: float,
+) -> tuple[float, float]:
+    """Return lat/lng at distance_miles along a route polyline."""
+    if not geometry:
+        return 0.0, 0.0
+    if len(geometry) == 1 or total_miles <= 0:
+        return geometry[0][0], geometry[0][1]
+
+    fraction = max(0.0, min(distance_miles / total_miles, 1.0))
+    segment_lengths = _geometry_segment_lengths_km(geometry)
+    total_km = sum(segment_lengths)
+    if total_km <= 0:
+        return geometry[-1][0], geometry[-1][1]
+
+    target_km = fraction * total_km
+    covered = 0.0
+    for index, seg_km in enumerate(segment_lengths):
+        if covered + seg_km >= target_km:
+            ratio = (target_km - covered) / seg_km if seg_km > 0 else 0.0
+            lat1, lng1 = geometry[index]
+            lat2, lng2 = geometry[index + 1]
+            return lat1 + (lat2 - lat1) * ratio, lng1 + (lng2 - lng1) * ratio
+        covered += seg_km
+
+    end = geometry[-1]
+    return end[0], end[1]
+
+
+def en_route_label(distance_miles: float, total_miles: float, destination_label: str) -> str:
+    if total_miles <= 0:
+        return destination_label
+    pct = int(min(100, max(0, (distance_miles / total_miles) * 100)))
+    return f"En route ({pct}% toward {destination_label})"
+
+
+@dataclass
+class LegProgress:
+    """Tracks miles driven along a route leg for stop-position interpolation."""
+
+    geometry: list[list[float]]
+    total_miles: float
+    destination_label: str
+    miles_completed: float = 0.0
+
+    def current_point(self) -> GeoPoint:
+        lat, lng = interpolate_along_geometry(self.geometry, self.miles_completed, self.total_miles)
+        return GeoPoint(
+            lat=lat,
+            lng=lng,
+            label=en_route_label(self.miles_completed, self.total_miles, self.destination_label),
+        )
+
+    def advance(self, miles: float) -> GeoPoint:
+        self.miles_completed = min(self.miles_completed + miles, self.total_miles)
+        return self.current_point()
