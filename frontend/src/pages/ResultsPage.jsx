@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getTrip } from '../services/api'
+import MapView from '../components/MapView'
+import LogSheet from '../components/LogSheet'
 
 export default function ResultsPage() {
   const { tripId } = useParams()
@@ -50,12 +52,13 @@ export default function ResultsPage() {
           <span className="stat-value">{trip.cycle_used_at_end?.toFixed?.(1)} / 70 h</span>
         </div>
         <div className="stat">
-          <span className="stat-label">Stops</span>
-          <span className="stat-value">{trip.stops?.length ?? 0}</span>
+          <span className="stat-label">Log Days</span>
+          <span className="stat-value">{trip.daily_logs?.length ?? 0}</span>
         </div>
       </div>
 
-      <pre className="card debug-json">{JSON.stringify(trip, null, 2)}</pre>
+      <MapView geometry={trip.route?.geometry} stops={trip.stops} />
+      <LogSheet dailyLogs={trip.daily_logs} />
     </section>
   )
 }
