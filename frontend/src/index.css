@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import './styles/theme.css';
+@import './styles/print.css';
 
 @layer base {
   body {
@@ -18,5 +19,9 @@
   .eyebrow {
     @apply text-[11px] font-semibold uppercase tracking-[0.14em];
     color: var(--sp-accent);
+  }
+
+  .sp-focus-ring {
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--sp-primary)] focus-visible:ring-offset-2;
   }
 }
