@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import { getTrip } from '../services/api'
 import MapView from '../components/MapView'
 import LogSheet from '../components/LogSheet'
+import DayWiseChart from '../components/DayWiseChart'
+import TripTimeline from '../components/TripTimeline'
 
 export default function ResultsPage() {
   const { tripId } = useParams()
@@ -17,7 +19,14 @@ export default function ResultsPage() {
       .finally(() => setLoading(false))
   }, [tripId])
 
-  if (loading) return <p className="loading">Loading trip…</p>
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner" />
+        <p>Planning your route…</p>
+      </div>
+    )
+  }
   if (error) return <p className="error-banner">{error}</p>
   if (!trip) return null
 
@@ -25,16 +34,15 @@ export default function ResultsPage() {
     <section className="results">
       <div className="results-header card">
         <div>
-          <h2>Trip #{trip.trip_id}</h2>
-          <p>
-            {trip.current_location} → {trip.pickup_location} → {trip.dropoff_location}
-          </p>
+          <p className="eyebrow">Trip #{trip.trip_id}</p>
+          <h2>{trip.current_location} → {trip.dropoff_location}</h2>
+          <p className="route-via">via {trip.pickup_location}</p>
         </div>
-        <Link to="/plan" className="btn btn-secondary">Plan Another</Link>
+        <Link to="/plan" className="btn btn-primary">Plan Another</Link>
       </div>
 
       <div className={`verdict card ${trip.is_legal ? 'legal' : 'illegal'}`}>
-        <strong>{trip.is_legal ? 'Legal trip plan' : 'Trip not completable'}</strong>
+        <strong>{trip.is_legal ? '✓ Legal trip plan' : '✗ Trip not completable'}</strong>
         {!trip.is_legal && trip.not_legal_reason && <p>{trip.not_legal_reason}</p>}
       </div>
 
@@ -57,7 +65,12 @@ export default function ResultsPage() {
         </div>
       </div>
 
-      <MapView geometry={trip.route?.geometry} stops={trip.stops} />
+      <div className="results-dashboard">
+        <MapView geometry={trip.route?.geometry} stops={trip.stops} />
+        <TripTimeline stops={trip.stops} />
+      </div>
+
+      <DayWiseChart dailyLogs={trip.daily_logs} />
       <LogSheet dailyLogs={trip.daily_logs} />
     </section>
   )

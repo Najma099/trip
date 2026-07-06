@@ -1,0 +1,225 @@
+.landing-page {
+  margin: -1.5rem;
+  min-height: calc(100vh - 80px);
+}
+
+.landing-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 4rem 2rem 5rem;
+  background:
+    linear-gradient(135deg, #0f172a 0%, #1e3a5f 45%, #0c4a6e 100%);
+  color: #f8fafc;
+}
+
+.landing-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.25) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.2) 0%, transparent 40%);
+  pointer-events: none;
+}
+
+.landing-hero-grid {
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.landing-hero-content {
+  animation: fadeUp 0.8s ease-out both;
+}
+
+.landing-hero-content h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0.75rem 0 1rem;
+  letter-spacing: -0.02em;
+}
+
+.landing-hero-content .lead {
+  color: #cbd5e1;
+  font-size: 1.1rem;
+  max-width: 42ch;
+  margin-bottom: 2rem;
+}
+
+.landing-hero-visual {
+  position: relative;
+  animation: fadeUp 0.8s 0.2s ease-out both;
+}
+
+.route-animation-svg {
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.3));
+}
+
+.route-path {
+  fill: none;
+  stroke: #38bdf8;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: drawRoute 3s ease-in-out infinite alternate;
+}
+
+.route-path-glow {
+  fill: none;
+  stroke: rgba(56, 189, 248, 0.3);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: drawRoute 3s ease-in-out infinite alternate;
+}
+
+.route-dot {
+  fill: #3b82f6;
+  animation: pulseDot 2s ease-in-out infinite;
+}
+
+.route-dot-end {
+  fill: #22c55e;
+}
+
+.route-dot-fuel {
+  fill: #f59e0b;
+}
+
+.landing-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.landing-actions .btn-primary {
+  padding: 0.85rem 1.75rem;
+  font-size: 1rem;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.landing-actions .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(59, 130, 246, 0.5);
+}
+
+.landing-actions .btn-ghost {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+.landing-actions .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.landing-features {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 3rem 2rem 4rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+}
+
+.feature-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem;
+  transition: transform 0.25s, box-shadow 0.25s;
+  animation: fadeUp 0.6s ease-out both;
+}
+
+.feature-card:nth-child(1) { animation-delay: 0.1s; }
+.feature-card:nth-child(2) { animation-delay: 0.2s; }
+.feature-card:nth-child(3) { animation-delay: 0.3s; }
+.feature-card:nth-child(4) { animation-delay: 0.4s; }
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
+.feature-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.feature-icon.blue { background: rgba(59, 130, 246, 0.15); }
+.feature-icon.green { background: rgba(34, 197, 94, 0.15); }
+.feature-icon.amber { background: rgba(245, 158, 11, 0.15); }
+.feature-icon.purple { background: rgba(139, 92, 246, 0.15); }
+
+.feature-card h3 {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.feature-card p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.landing-bottom {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 2rem 3rem;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes drawRoute {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; r: 6; }
+  50% { opacity: 0.7; r: 8; }
+}
+
+@media (max-width: 900px) {
+  .landing-hero-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-features {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .landing-features {
+    grid-template-columns: 1fr;
+  }
+}
