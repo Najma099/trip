@@ -5,6 +5,37 @@ import 'leaflet/dist/leaflet.css'
 import useReducedMotion from '../hooks/useReducedMotion'
 import { STOP_META } from '../constants/stopColors'
 
+/** Spread markers that share the same lat/lng so each stop color stays visible. */
+function spreadOverlappingStops(stops) {
+  const groups = new Map()
+
+  stops.forEach((stop, index) => {
+    const key = `${stop.lat.toFixed(5)}:${stop.lng.toFixed(5)}`
+    if (!groups.has(key)) groups.set(key, [])
+    groups.get(key).push(index)
+  })
+
+  const centers = stops.map((stop) => [stop.lat, stop.lng])
+
+  groups.forEach((indices) => {
+    if (indices.length <= 1) return
+
+    const radius = 0.006
+    const step = (2 * Math.PI) / indices.length
+
+    indices.forEach((index, offsetIndex) => {
+      const angle = step * offsetIndex
+      const lat = stops[index].lat
+      centers[index] = [
+        lat + radius * Math.sin(angle),
+        stops[index].lng + (radius * Math.cos(angle)) / Math.cos((lat * Math.PI) / 180),
+      ]
+    })
+  })
+
+  return centers
+}
+
 function FitBounds({ bounds }) {
   const map = useMap()
   useEffect(() => {
@@ -86,6 +117,7 @@ export default function TripMap({ geometry = [], stops = [] }) {
   const reduceMotion = useReducedMotion()
   const [truckIndex, setTruckIndex] = useState(0)
   const positions = useMemo(() => geometry.map(([lat, lng]) => [lat, lng]), [geometry])
+  const stopCenters = useMemo(() => spreadOverlappingStops(stops), [stops])
   const truckIcon = useMemo(() => TruckMarkerIcon(), [])
 
   if (!geometry.length) {
@@ -115,20 +147,20 @@ export default function TripMap({ geometry = [], stops = [] }) {
         {stops.map((stop, i) => {
           const meta = STOP_META[stop.type] || STOP_META.deadhead
           const isMajor = stop.type === 'pickup' || stop.type === 'dropoff' || stop.type === 'deadhead'
-          const radius = isMajor ? 9 : 7
+          const radius = isMajor ? 11 : 9
+          const zIndexOffset = isMajor ? 200 : 100 + i
 
           return (
             <CircleMarker
               key={`${stop.type}-${i}-${stop.lat}-${stop.lng}`}
-              center={[stop.lat, stop.lng]}
+              center={stopCenters[i]}
               radius={radius}
-              pathOptions={{
-                fillColor: meta.color,
-                fillOpacity: 1,
-                color: '#ffffff',
-                weight: 2.5,
-                opacity: 1,
-              }}
+              zIndexOffset={zIndexOffset}
+              fillColor={meta.color}
+              fillOpacity={1}
+              color="#ffffff"
+              weight={2.5}
+              opacity={1}
             >
               <Popup>
                 <strong>{meta.label}</strong>

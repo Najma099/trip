@@ -2,12 +2,15 @@ import {
   Bed,
   Coffee,
   Fuel,
+  Info,
   MapPin,
   Navigation,
   PackageCheck,
   PackageOpen,
 } from 'lucide-react'
 import { formatStopTime } from '../utils/format'
+
+const FUEL_INTERVAL_MILES = 1000
 
 const STOP_META = {
   deadhead: { label: 'Origin', color: 'var(--stop-deadhead)', icon: Navigation },
@@ -18,10 +21,13 @@ const STOP_META = {
   break: { label: '30-min Break', color: 'var(--stop-break)', icon: Coffee },
 }
 
-export default function StopTimeline({ stops = [] }) {
+export default function StopTimeline({ stops = [], loadedMiles = null }) {
   if (!stops.length) return null
 
   const sorted = [...stops].sort((a, b) => new Date(a.arrival) - new Date(b.arrival))
+  const hasFuelStop = sorted.some((stop) => stop.type === 'fuel')
+  const showFuelNote =
+    !hasFuelStop && (loadedMiles == null || loadedMiles < FUEL_INTERVAL_MILES)
 
   return (
     <div
@@ -39,6 +45,29 @@ export default function StopTimeline({ stops = [] }) {
         </div>
         <MapPin size={16} className="text-[color:var(--sp-text-tertiary)]" aria-hidden="true" />
       </div>
+
+      {showFuelNote && (
+        <div
+          data-testid="fuel-stop-note"
+          className="mx-5 mb-4 flex gap-2 rounded-lg border border-amber-200/80 bg-amber-50 px-3 py-2.5 text-xs text-amber-900"
+        >
+          <Info size={14} className="mt-0.5 shrink-0 text-amber-600" aria-hidden="true" />
+          <p>
+            {loadedMiles != null ? (
+              <>
+                No fuel stop required — loaded leg is{' '}
+                <strong>{Math.round(loadedMiles).toLocaleString()} mi</strong> (under{' '}
+                {FUEL_INTERVAL_MILES.toLocaleString()} mi).
+              </>
+            ) : (
+              <>
+                No fuel stop on this trip — fuel stops are inserted every{' '}
+                {FUEL_INTERVAL_MILES.toLocaleString()} mi on the loaded leg only.
+              </>
+            )}
+          </p>
+        </div>
+      )}
 
       <ol className="sp-scroll relative max-h-[440px] overflow-y-auto px-5 py-4">
         {sorted.map((stop, i) => {
