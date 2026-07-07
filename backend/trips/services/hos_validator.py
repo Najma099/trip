@@ -1,6 +1,6 @@
 """Validate FMCSA HOS rules against generated segment timelines."""
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from trips.hos_constants import (
     BREAK_AFTER_DRIVE_MINUTES,

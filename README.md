@@ -71,6 +71,22 @@ Trip sequence: pre-trip inspection → drive to pickup → 1 hr on-duty at picku
 
 ---
 
+## Quick start (Docker)
+
+```bash
+docker compose up --build
+# → http://localhost:3000  (frontend)
+# → http://localhost:8000  (backend API)
+```
+
+- Frontend serves the SPA at `localhost:3000` with nginx proxying `/api/*` to the backend.
+- Backend runs gunicorn on `:8000` with auto-migration on startup.
+- PostgreSQL runs on `:5432` with health checks.
+- Set `ORS_API_KEY` in your shell or `.env` to enable route planning.
+
+---
+
+
 ## Quick start (local)
 
 ### Prerequisites
@@ -126,18 +142,10 @@ Open the app → **Try Demo Trip** or on Plan Trip click **Fill demo trip**:
 
 ## Deployment
 
-Your latest commits live on your machine until you push. GitHub currently shows older commits — run `git push origin main` after pulling this branch.
-
-### Step 0 — Push to GitHub
+Commits on the `main` branch are ready for review locally. Push to GitHub when ready:
 
 ```bash
 git push origin main
-```
-
-If you rewrote history (e.g. removed co-author lines), use:
-
-```bash
-git push --force-with-lease origin main
 ```
 
 ---
@@ -288,10 +296,11 @@ trip/
 ## Intentionally deferred
 
 - JWT auth / account login (guest mode only for MVP)
-- Sleeper-berth split (§395.1(g))
 - Adverse driving conditions (§395.1(b))
 - Team drivers
 - Certified ELD device output
+
+**Implemented**: sleeper-berth split (§395.1(g)) — 8-hour sleeper + 2-hour off-duty completes a daily reset.
 
 ---
 

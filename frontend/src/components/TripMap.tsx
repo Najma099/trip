@@ -4,18 +4,18 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import useReducedMotion from '../hooks/useReducedMotion'
 import { STOP_META } from '../constants/stopColors'
+import type { RouteStop } from '../types/trip'
 
-/** Spread markers that share the same lat/lng so each stop color stays visible. */
-function spreadOverlappingStops(stops) {
-  const groups = new Map()
+function spreadOverlappingStops(stops: RouteStop[]): [number, number][] {
+  const groups = new Map<string, number[]>()
 
   stops.forEach((stop, index) => {
     const key = `${stop.lat.toFixed(5)}:${stop.lng.toFixed(5)}`
     if (!groups.has(key)) groups.set(key, [])
-    groups.get(key).push(index)
+    groups.get(key)!.push(index)
   })
 
-  const centers = stops.map((stop) => [stop.lat, stop.lng])
+  const centers: [number, number][] = stops.map((stop) => [stop.lat, stop.lng])
 
   groups.forEach((indices) => {
     if (indices.length <= 1) return
@@ -36,7 +36,7 @@ function spreadOverlappingStops(stops) {
   return centers
 }
 
-function FitBounds({ bounds }) {
+function FitBounds({ bounds }: { bounds: L.LatLngBounds }) {
   const map = useMap()
   useEffect(() => {
     if (bounds.isValid()) map.fitBounds(bounds, { padding: [40, 40] })
@@ -44,21 +44,36 @@ function FitBounds({ bounds }) {
   return null
 }
 
-function AnimatedRoute({ positions, onProgress, reduceMotion }) {
-  const [visibleCount, setVisibleCount] = useState(0)
-  const pathRef = useRef(null)
-  const [pathLength, setPathLength] = useState(0)
+function AnimatedRoute({
+  positions,
+  onProgress,
+  reduceMotion,
+}: {
+  positions: [number, number][]
+  onProgress?: (index: number) => void
+  reduceMotion: boolean
+}) {
+  const animatedRef = useRef<L.Polyline>(null)
+  const animationDone = useRef(false)
 
   useEffect(() => {
-    setVisibleCount(positions.length)
     onProgress?.(positions.length - 1)
   }, [positions, onProgress])
 
   useEffect(() => {
-    if (pathRef.current) {
-      setPathLength(pathRef.current.getTotalLength?.() ?? 0)
-    }
-  }, [positions])
+    if (animationDone.current || !animatedRef.current || reduceMotion) return
+    const el = animatedRef.current.getElement?.()
+    if (!el) return
+    const len = el.getTotalLength?.() ?? 0
+    if (len <= 0) return
+    animationDone.current = true
+    el.style.strokeDasharray = `${len}`
+    el.style.strokeDashoffset = `${len}`
+    el.style.transition = 'stroke-dashoffset 2000ms cubic-bezier(0.2, 0.7, 0.2, 1)'
+    requestAnimationFrame(() => {
+      el.style.strokeDashoffset = '0'
+    })
+  }, [positions, reduceMotion])
 
   if (positions.length < 2) return null
 
@@ -69,33 +84,14 @@ function AnimatedRoute({ positions, onProgress, reduceMotion }) {
         pathOptions={{ color: '#0ea5e9', weight: 10, opacity: 0.15, lineCap: 'round', lineJoin: 'round' }}
       />
       <Polyline
-        ref={pathRef}
-        positions={positions.slice(0, Math.max(2, visibleCount))}
+        ref={animatedRef}
+        positions={positions}
         pathOptions={{
           color: '#0ea5e9',
           weight: 4,
           opacity: 1,
           lineCap: 'round',
           lineJoin: 'round',
-          dashArray: pathLength || undefined,
-          dashOffset: pathLength ? 0 : undefined,
-        }}
-        eventHandlers={{
-          add: (e) => {
-            const len = e.target.getElement()?.getTotalLength?.() ?? 0
-            setPathLength(len)
-            const el = e.target.getElement()
-            if (el && !reduceMotion) {
-              el.style.strokeDasharray = `${len}`
-              el.style.strokeDashoffset = `${len}`
-              el.style.transition = 'stroke-dashoffset 2000ms cubic-bezier(0.2, 0.7, 0.2, 1)'
-              requestAnimationFrame(() => {
-                el.style.strokeDashoffset = '0'
-              })
-            } else if (el) {
-              el.style.strokeDashoffset = '0'
-            }
-          },
         }}
       />
     </>
@@ -113,10 +109,10 @@ function TruckMarkerIcon() {
   })
 }
 
-export default function TripMap({ geometry = [], stops = [] }) {
+export default function TripMap({ geometry = [], stops = [] }: { geometry?: [number, number][]; stops?: RouteStop[] }) {
   const reduceMotion = useReducedMotion()
   const [truckIndex, setTruckIndex] = useState(0)
-  const positions = useMemo(() => geometry.map(([lat, lng]) => [lat, lng]), [geometry])
+  const positions = useMemo(() => geometry.map(([lat, lng]) => [lat, lng] as [number, number]), [geometry])
   const stopCenters = useMemo(() => spreadOverlappingStops(stops), [stops])
   const truckIcon = useMemo(() => TruckMarkerIcon(), [])
 

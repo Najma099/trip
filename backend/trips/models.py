@@ -1,7 +1,14 @@
+from django.conf import settings
 from django.db import models
 
 
 class Trip(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True, blank=True,
+        on_delete=models.SET_NULL,
+        db_index=True,
+    )
     guest_id = models.CharField(max_length=64, null=True, blank=True, db_index=True)
     current_location = models.CharField(max_length=255)
     pickup_location = models.CharField(max_length=255)

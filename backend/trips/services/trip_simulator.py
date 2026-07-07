@@ -76,7 +76,6 @@ def _drive_with_fuel_stops(
                 lat=point.lat,
                 lng=point.lng,
                 location_label=f"Fuel stop — {point.label}",
-                progress=progress,
             ):
                 return False
             stops.append(
@@ -191,7 +190,7 @@ def simulate_trip(
                 stop_type = "rest"
             elif duration_min >= 600:
                 stop_type = "rest"
-            elif "split berth completion" in label.lower():
+            elif "split berth" in label.lower():
                 stop_type = "rest"
             else:
                 stop_type = "break"

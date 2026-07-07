@@ -10,10 +10,13 @@ from trips.models import Trip
 
 class TripListCreateView(APIView):
     def get(self, request):
-        guest_id = request.query_params.get("guest_id")
-        if not guest_id:
-            return Response({"detail": "guest_id query parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
-        trips = Trip.objects.filter(guest_id=guest_id)
+        if request.user.is_authenticated:
+            trips = Trip.objects.filter(user=request.user)
+        else:
+            guest_id = request.query_params.get("guest_id")
+            if not guest_id:
+                return Response({"detail": "guest_id query parameter is required."}, status=status.HTTP_400_BAD_REQUEST)
+            trips = Trip.objects.filter(guest_id=guest_id)
         serializer = TripListSerializer(trips, many=True)
         return Response(serializer.data)
 
@@ -22,6 +25,8 @@ class TripListCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
+        user = request.user if request.user.is_authenticated else None
+
         try:
             trip, _ = create_and_simulate_trip(
                 guest_id=data.get("guest_id") or None,
@@ -29,6 +34,7 @@ class TripListCreateView(APIView):
                 pickup_location=data["pickup_location"],
                 dropoff_location=data["dropoff_location"],
                 current_cycle_used=data["current_cycle_used"],
+                user=user,
             )
         except RoutingError as exc:
             return Response(
@@ -39,7 +45,6 @@ class TripListCreateView(APIView):
                 status=status.HTTP_502_BAD_GATEWAY,
             )
         except Exception as exc:
-            # Surface migration/DB issues clearly instead of a bare 500 in the client.
             return Response(
                 {"detail": f"Trip planning failed: {exc}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,

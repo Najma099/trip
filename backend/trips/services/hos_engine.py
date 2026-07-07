@@ -8,7 +8,6 @@ from trips.hos_constants import (
     BREAK_AFTER_DRIVE_MINUTES,
     BREAK_DURATION_MINUTES,
     CYCLE_RESTART_MINUTES,
-    DAILY_RESET_MINUTES,
     MAX_CYCLE_HOURS,
     MAX_DRIVE_MINUTES,
     MAX_WINDOW_MINUTES,
@@ -41,7 +40,17 @@ class HOSEngineResult:
 
 
 class HOSEngine:
-    """Greedy HOS scheduler enforcing FMCSA property-carrying rules."""
+    """Greedy FMCSA HOS scheduler for property-carrying drivers (49 CFR §395).
+
+    Scope: property-carrying, 70 hr / 8 day cycle, no adverse driving conditions.
+    Does NOT support: passenger-carrying rules, oil-field exemptions, or
+    short-haul exceptions.
+
+    Reset model — all daily-reset and cycle-restart transitions are explicit
+    method calls (_insert_daily_reset / _insert_restart).  ``add_segment``
+    never infers a reset from segment duration, preventing accidental state
+        corruption if an off/sleeper segment happens to exceed a threshold.
+    """
 
     def __init__(self, current_cycle_used_hrs: float, start_time: datetime):
         self.remaining_drive = MAX_DRIVE_MINUTES
@@ -81,6 +90,14 @@ class HOSEngine:
         lng: float | None = None,
         location_label: str = "",
     ) -> bool:
+        """Record a duty-status segment and update engine bookkeeping.
+
+        NOTE: this method NEVER infers daily resets or cycle restarts from
+        segment duration.  All resets are triggered explicitly by the caller
+        (``_insert_daily_reset`` / ``_insert_restart``) to avoid accidentally
+        corrupting engine state when off/sleeper segments happen to cross a
+        duration threshold.
+        """
         if duration_minutes <= 0:
             return True
         if not self.is_legal:
@@ -109,11 +126,6 @@ class HOSEngine:
             self.remaining_cycle -= duration_minutes
             if not self._on_duty_since_window_start:
                 self._on_duty_since_window_start = True
-        elif status in ("off", "sleeper"):
-            if duration_minutes >= CYCLE_RESTART_MINUTES:
-                self._apply_cycle_restart()
-            elif duration_minutes >= DAILY_RESET_MINUTES:
-                self._apply_daily_reset()
 
         return True
 
@@ -147,7 +159,7 @@ class HOSEngine:
                 SLEEPER_BERTH_SHORT_MINUTES,
                 lat,
                 lng,
-                label or "Off-duty (split berth completion)",
+                f"Split berth completion — {label}" if label else "Split berth completion",
             ):
                 return False
             self._apply_daily_reset()
@@ -184,7 +196,10 @@ class HOSEngine:
     ) -> bool:
         lat, lng, label = self._resolve_location(progress, lat, lng, location_label)
         self._split_berth_pending = False
-        return self.add_segment("off", CYCLE_RESTART_MINUTES, lat, lng, label or "34-hour restart")
+        if not self.add_segment("off", CYCLE_RESTART_MINUTES, lat, lng, label or "34-hour restart"):
+            return False
+        self._apply_cycle_restart()
+        return True
 
     def on_duty(
         self,
@@ -211,6 +226,15 @@ class HOSEngine:
         location_label: str = "",
         progress: LegProgress | None = None,
     ) -> bool:
+        """Drive ``distance_miles`` respecting FMCSA limits.
+
+        30-minute break (49 CFR §395.3(a)(3)(ii)):
+        The break is required after 8 **cumulative driving** hours.
+        ``driving_since_break`` increments only during driving segments and
+        is reset to zero by ``_insert_break``.  On-duty (non-driving) time
+        does NOT count toward the break threshold and does NOT reset it,
+        matching FMCSA interpretations.
+        """
         if not self.is_legal:
             return False
 

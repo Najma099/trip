@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
 import { GuestProvider } from './context/GuestContext'
 import { ToastProvider } from './context/ToastContext'
 import Header from './components/Header'
@@ -12,6 +13,9 @@ import { Skeleton } from './components/Skeleton'
 const Landing = lazy(() => import('./pages/Landing'))
 const PlanTrip = lazy(() => import('./pages/PlanTrip'))
 const TripResults = lazy(() => import('./pages/TripResults'))
+const LoginPage = lazy(() => import('./pages/LoginPage'))
+const RegisterPage = lazy(() => import('./pages/RegisterPage'))
+const PasswordResetPage = lazy(() => import('./pages/PasswordResetPage'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 function PageFallback() {
@@ -24,30 +28,35 @@ function PageFallback() {
 
 function App() {
   return (
-    <GuestProvider>
-      <ToastProvider>
-        <BrowserRouter>
-          <SkipToContent />
-          <ScrollToTop />
-          <div className="App flex min-h-screen flex-col">
-            <Header />
-            <main id="main-content" className="flex-1" tabIndex={-1}>
-              <ErrorBoundary>
-                <Suspense fallback={<PageFallback />}>
-                  <Routes>
-                    <Route path="/" element={<Landing />} />
-                    <Route path="/plan" element={<PlanTrip />} />
-                    <Route path="/results/:tripId" element={<TripResults />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
-              </ErrorBoundary>
-            </main>
-            <Footer />
-          </div>
-        </BrowserRouter>
-      </ToastProvider>
-    </GuestProvider>
+    <AuthProvider>
+      <GuestProvider>
+        <ToastProvider>
+          <BrowserRouter>
+            <SkipToContent />
+            <ScrollToTop />
+            <div className="App flex min-h-screen flex-col">
+              <Header />
+              <main id="main-content" className="flex-1" tabIndex={-1}>
+                <ErrorBoundary>
+                  <Suspense fallback={<PageFallback />}>
+                    <Routes>
+                      <Route path="/" element={<Landing />} />
+                      <Route path="/plan" element={<PlanTrip />} />
+                      <Route path="/results/:tripId" element={<TripResults />} />
+                      <Route path="/login" element={<LoginPage />} />
+                      <Route path="/register" element={<RegisterPage />} />
+                      <Route path="/password-reset" element={<PasswordResetPage />} />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                </ErrorBoundary>
+              </main>
+              <Footer />
+            </div>
+          </BrowserRouter>
+        </ToastProvider>
+      </GuestProvider>
+    </AuthProvider>
   )
 }
 

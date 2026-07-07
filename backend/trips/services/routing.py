@@ -160,27 +160,35 @@ def interpolate_along_geometry(
     distance_miles: float,
     total_miles: float,
 ) -> tuple[float, float]:
-    """Return lat/lng at distance_miles along a route polyline."""
+    """Return lat/lng at distance_miles along a route polyline.
+
+    Uses road-distance scaling: haversine straight-line segments are scaled
+    by road_total / haversine_total so the interpolation follows the actual
+    road distance rather than the crow-flies distance.
+    """
     if not geometry:
         return 0.0, 0.0
     if len(geometry) == 1 or total_miles <= 0:
         return geometry[0][0], geometry[0][1]
 
-    fraction = max(0.0, min(distance_miles / total_miles, 1.0))
     segment_lengths = _geometry_segment_lengths_km(geometry)
-    total_km = sum(segment_lengths)
-    if total_km <= 0:
+    haversine_total = sum(segment_lengths)
+    if haversine_total <= 0:
         return geometry[-1][0], geometry[-1][1]
 
-    target_km = fraction * total_km
+    road_total_km = total_miles * 1.60934
+    scale = road_total_km / haversine_total
+    target_km = distance_miles * 1.60934
+
     covered = 0.0
     for index, seg_km in enumerate(segment_lengths):
-        if covered + seg_km >= target_km:
-            ratio = (target_km - covered) / seg_km if seg_km > 0 else 0.0
+        road_seg_km = seg_km * scale
+        if covered + road_seg_km >= target_km:
+            ratio = (target_km - covered) / road_seg_km if road_seg_km > 0 else 0.0
             lat1, lng1 = geometry[index]
             lat2, lng2 = geometry[index + 1]
             return lat1 + (lat2 - lat1) * ratio, lng1 + (lng2 - lng1) * ratio
-        covered += seg_km
+        covered += road_seg_km
 
     end = geometry[-1]
     return end[0], end[1]

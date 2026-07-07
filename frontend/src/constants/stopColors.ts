@@ -1,5 +1,6 @@
-/** Literal hex values for map stop markers (Leaflet divIcons cannot resolve CSS vars in inline HTML). */
-export const STOP_COLORS = {
+import type { StopType } from '../types/trip'
+
+export const STOP_COLORS: Record<StopType, string> = {
   pickup: '#2563eb',
   dropoff: '#7c3aed',
   fuel: '#d97706',
@@ -8,7 +9,12 @@ export const STOP_COLORS = {
   deadhead: '#64748b',
 }
 
-export const STOP_META = {
+export interface StopMeta {
+  label: string
+  color: string
+}
+
+export const STOP_META: Record<StopType, StopMeta> = {
   pickup: { label: 'Pickup', color: STOP_COLORS.pickup },
   dropoff: { label: 'Dropoff', color: STOP_COLORS.dropoff },
   fuel: { label: 'Fuel', color: STOP_COLORS.fuel },

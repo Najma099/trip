@@ -1,8 +1,11 @@
+from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from trips.models import DutyStatusSegment, RouteStop, Trip
 from trips.services.trip_simulator import TripSimulationResult, simulate_trip
 from trips.services.routing import ORSClient, RoutingError
+
+User = get_user_model()
 
 
 def persist_trip(
@@ -12,9 +15,11 @@ def persist_trip(
     dropoff_location: str,
     current_cycle_used: float,
     simulation: TripSimulationResult,
+    user: User | None = None,
 ) -> Trip:
     with transaction.atomic():
         trip = Trip.objects.create(
+            user=user,
             guest_id=guest_id or None,
             current_location=current_location,
             pickup_location=pickup_location,
@@ -63,6 +68,7 @@ def create_and_simulate_trip(
     dropoff_location: str,
     current_cycle_used: float,
     ors_client: ORSClient | None = None,
+    user: User | None = None,
 ) -> tuple[Trip, TripSimulationResult]:
     client = ors_client or ORSClient()
     simulation = simulate_trip(
@@ -79,5 +85,6 @@ def create_and_simulate_trip(
         dropoff_location=dropoff_location,
         current_cycle_used=current_cycle_used,
         simulation=simulation,
+        user=user,
     )
     return trip, simulation

@@ -1,10 +1,13 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { Plus, ShieldCheck, Truck } from 'lucide-react'
+import { LogOut, Plus, ShieldCheck, Truck, User } from 'lucide-react'
+import { useAuth } from '../context/AuthContext'
 import { useGuest } from '../context/GuestContext'
 
 export default function Header() {
   const navigate = useNavigate()
+  const { user, logout } = useAuth()
   const { guestId } = useGuest()
+
   const handle = guestId ? guestId.replace(/-/g, '').slice(0, 4).toUpperCase() : '----'
 
   return (
@@ -56,15 +59,38 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <div
-            data-testid="guest-badge"
-            className="hidden items-center gap-2 rounded-full border border-[color:var(--sp-border)] bg-[color:var(--sp-bg)] px-3 py-1 text-xs font-medium text-[color:var(--sp-text-secondary)] sm:flex"
-            title="Guest session"
-          >
-            <ShieldCheck size={13} className="text-[color:var(--sp-accent)]" aria-hidden="true" />
-            <span>Guest</span>
-            <span className="font-mono text-[10px] text-[color:var(--sp-text-tertiary)]">#{handle}</span>
-          </div>
+          {user ? (
+            <div className="flex items-center gap-2">
+              <div
+                data-testid="user-badge"
+                className="hidden items-center gap-2 rounded-full border border-[color:var(--sp-border)] bg-[color:var(--sp-bg)] px-3 py-1 text-xs font-medium text-[color:var(--sp-text-secondary)] sm:flex"
+                title="Authenticated"
+              >
+                <User size={13} className="text-[color:var(--sp-accent)]" aria-hidden="true" />
+                <span>{user.username}</span>
+              </div>
+              <button
+                type="button"
+                data-testid="header-logout-btn"
+                onClick={logout}
+                className="inline-flex items-center gap-1.5 rounded-md border border-[color:var(--sp-border)] px-3 py-1.5 text-xs font-medium text-[color:var(--sp-text-secondary)] transition-colors hover:bg-red-50 hover:text-red-600"
+              >
+                <LogOut size={13} strokeWidth={2.5} aria-hidden="true" />
+                <span className="hidden sm:inline">Logout</span>
+              </button>
+            </div>
+          ) : (
+            <div
+              data-testid="guest-badge"
+              className="hidden items-center gap-2 rounded-full border border-[color:var(--sp-border)] bg-[color:var(--sp-bg)] px-3 py-1 text-xs font-medium text-[color:var(--sp-text-secondary)] sm:flex"
+              title="Guest session"
+            >
+              <ShieldCheck size={13} className="text-[color:var(--sp-accent)]" aria-hidden="true" />
+              <span>Guest</span>
+              <span className="font-mono text-[10px] text-[color:var(--sp-text-tertiary)]">#{handle}</span>
+            </div>
+          )}
+
           <button
             type="button"
             data-testid="header-new-trip-btn"
