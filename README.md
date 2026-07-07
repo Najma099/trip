@@ -149,11 +149,11 @@ Response includes `trip_id`, `route` (distance, geometry), `stops`, `daily_logs`
 ## Running tests
 
 ```bash
-cd backend && python -m pytest tests/ -v
+cd backend && python -m pytest -v
 cd frontend && npm run test
 ```
 
-25 backend tests. 8 frontend tests.
+35 tests total (25 backend, 10 auth, 8 frontend).
 
 ---
 
